@@ -26,10 +26,44 @@ App web para analizar **avisos de trabajo** como lo haría un ATS (sistema de se
 
 El motor local por reglas funciona sin conexión.
 
+## IA (v0.0.3) <a id="ia"></a>
+
+La IA es opcional y complementa al motor local:
+
+- **Analizar con IA:** resume el puesto, marca alertas y da consejos. Además encuentra términos y sinónimos que el diccionario no conoce y los propone como **reglas sugeridas**. Vos elegís cuáles sumar al motor local.
+- **Comparar con IA:** da un puntaje de la IA junto al del motor local, con fortalezas, brechas, sugerencias por sección y palabras clave para sumar. Nunca inventa experiencia. La primera vez pide confirmación para enviar el CV.
+- **Reglas propias con versión:** cada cambio (agregar, borrar, aprobar desde la IA, importar) crea una versión nueva. Desde **Diccionario → Versiones** se puede volver a cualquiera de las últimas 30. Las reglas se exportan e importan en `.json` (`tipo: "reglas"`).
+- **Resultados guardados:** quedan en el historial de cada aviso, así que no hace falta volver a consultar.
+
+### Conexión recomendada: Apps Script propio
+
+La clave queda en tu cuenta de Google, nunca en el navegador. Sirve desde cualquier dispositivo y tiene un límite diario de consultas.
+
+1. Entrá a [script.google.com](https://script.google.com) → **Nuevo proyecto** y pegá el contenido de [`apps-script/Codigo.gs`](apps-script/Codigo.gs).
+2. En **Configuración del proyecto ⚙️ → Propiedades del script**, agregá:
+   - `PROVEEDOR`: `gemini` (tiene plan gratuito, clave en [aistudio.google.com](https://aistudio.google.com)) o `claude` (pago por uso, clave en [console.anthropic.com](https://console.anthropic.com)).
+   - `CLAVE_API`: tu clave.
+   - `TOKEN`: generalo en la app, en **⋯ → Configurar IA → Generar**.
+   - Opcionales: `MODELO` (por defecto `gemini-flash-latest` o `claude-haiku-5-5`) y `LIMITE_DIARIO` (por defecto 100).
+3. Tocá **Implementar → Nueva implementación → Aplicación web**, con *Ejecutar como: Yo* y *Quién tiene acceso: Cualquier usuario*. Autorizá y copiá la URL que termina en `/exec`.
+4. En la app, entrá a **⋯ → Configurar IA**, pegá la URL y el token, y tocá **Probar**.
+
+Si cambiás el código del script, implementá una **nueva versión** en *Implementar → Gestionar implementaciones*. Así la URL sigue siendo la misma.
+
+### Alternativa: clave en este navegador
+
+Se elige Gemini o Claude y se pega la clave. Es más rápido, pero la clave queda guardada en ese navegador y hay que cargarla en cada dispositivo. En ningún caso la configuración de IA se incluye en el backup.
+
+> **Privacidad:** la IA recibe el aviso y, en el match, también tu CV. Según las condiciones de Google, en el plan gratuito de Gemini los datos pueden usarse para mejorar sus productos. Revisá las condiciones vigentes.
+
+## Tema
+
+Por defecto sigue el tema del sistema (claro u oscuro). Se puede fijar en **⋯ → Tema**. Al imprimir siempre sale en claro.
+
 ## Próximas fases
 
 1. **Fase 2 (hecha en v0.0.2):** importar el CV. Pendiente a futuro: un botón "Enviar a Job Post" en CVAPP y OCR para PDF escaneados.
-2. **Fase 3:** motor con IA, idealmente con un intermediario en Apps Script para no exponer la clave de API. Las reglas nuevas que sugiera la IA se aprueban antes de sumarse a la base local, que es acumulativa y tiene versión. Se van a poder importar y exportar paquetes de reglas en JSON.
+2. **Fase 3 (hecha en v0.0.3):** motor con IA, reglas aprobadas con versión e importación y exportación de reglas, además del tema de sistema.
 3. **Fase 4:** sumar la app a Mi Panel y a la caja de apps, más extras:
    - seguimiento de postulaciones;
    - resaltar en el CV las palabras clave del aviso;

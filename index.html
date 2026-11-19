@@ -3,11 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="app-version" content="v0.0.2">
+<meta name="app-version" content="v0.0.3">
 <meta name="theme-color" content="#0f766e">
+<meta name="color-scheme" content="light dark">
+<script>try{var t=(JSON.parse(localStorage.getItem("jobpost_app_v1")||"{}").tema)||"sistema";document.documentElement.dataset.tema=(t==="oscuro"||(t==="sistema"&&matchMedia("(prefers-color-scheme: dark)").matches))?"dark":"light";}catch(e){}</script>
 <title>Job Post ATS Analizer</title>
 <style>
-  :root{--bg:#f3f6f6;--card:#fff;--tx:#1c1f26;--mut:#6b7280;--bd:#e2e8ea;--ac:#0f766e;--ac2:#e6f4f2;--ok:#15803d;--okb:#dcfce7;--mid:#b45309;--midb:#fef3c7;--bad:#b91c1c;--badb:#fee2e2;--r:14px}
+  :root{color-scheme:light;--bg:#f3f6f6;--card:#fff;--tx:#1c1f26;--mut:#6b7280;--bd:#e2e8ea;--bd2:#c9ced6;--ac:#0f766e;--ac2:#e6f4f2;--onac:#fff;--ok:#15803d;--okb:#dcfce7;--mid:#b45309;--midb:#fef3c7;--bad:#b91c1c;--badb:#fee2e2;--inp:#fff;--chip:#f1f5f9;--chipt:#334155;--meter:#e5e7eb;--dangerb:#f3c4c4;--r:14px}
+  html[data-tema=dark]{color-scheme:dark;--bg:#0e1416;--card:#172024;--tx:#e6e9eb;--mut:#9aa6ad;--bd:#2a363b;--bd2:#3b484e;--ac:#2dd4bf;--ac2:#12332f;--onac:#04201d;--ok:#4ade80;--okb:#12321f;--mid:#fbbf24;--midb:#3a2f12;--bad:#f87171;--badb:#3d1717;--inp:#11191c;--chip:#243035;--chipt:#cbd5da;--meter:#2a363b;--dangerb:#6b2a2a}
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
   header{position:sticky;top:0;z-index:50;background:var(--card);border-bottom:1px solid var(--bd)}
@@ -25,13 +28,14 @@
   .mut{color:var(--mut)} .sm{font-size:13px} .warn{color:var(--mid)}
   a{color:var(--ac)}
   .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-  .btn{border:1px solid #c9ced6;border-radius:10px;padding:8px 13px;background:#fff;color:var(--tx);font:14px system-ui,sans-serif;cursor:pointer}
-  .btn.pri{background:var(--ac);border-color:var(--ac);color:#fff}
-  .btn.danger{color:var(--bad);border-color:#f3c4c4}
+  .btn{border:1px solid var(--bd2);border-radius:10px;padding:8px 13px;background:var(--card);color:var(--tx);text-decoration:none;display:inline-block;font:14px system-ui,sans-serif;cursor:pointer}
+  .btn.pri{background:var(--ac);border-color:var(--ac);color:var(--onac)}
+  .btn:disabled{opacity:.55;cursor:default}
+  .btn.danger{color:var(--bad);border-color:var(--dangerb)}
   .btn.xs{padding:4px 9px;font-size:13px;border-radius:8px}
   .ic{border:0;background:none;font-size:18px;padding:6px;cursor:pointer;color:var(--mut);border-radius:8px;line-height:1}
   .ic:hover{background:var(--bg)}
-  input,select,textarea{font:15px system-ui,sans-serif;color:var(--tx);border:1px solid var(--bd);border-radius:9px;padding:7px 9px;background:#fff;min-width:0;width:100%}
+  input,select,textarea{font:15px system-ui,sans-serif;color:var(--tx);border:1px solid var(--bd);border-radius:9px;padding:7px 9px;background:var(--inp);min-width:0;width:100%}
   textarea{resize:vertical;line-height:1.4}
   input:focus,select:focus,textarea:focus{outline:2px solid var(--ac2);border-color:var(--ac)}
   label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mut)}
@@ -43,13 +47,17 @@
   .kv dt{color:var(--mut)} .kv dd{margin:0}
   /* Chips */
   .chips{display:flex;flex-wrap:wrap;gap:6px}
-  .chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 10px;font-size:13px;background:#f1f5f9;color:#334155;border:1px solid transparent}
+  .chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 10px;font-size:13px;background:var(--chip);color:var(--chipt);border:1px solid transparent}
   .chip b{font-weight:700;opacity:.7}
   .chip button{border:0;background:none;padding:0 0 0 2px;font:700 14px system-ui;cursor:pointer;color:inherit}
   .c-L{background:#dbeafe;color:#1e40af}.c-D{background:#dcfce7;color:#166534}.c-C{background:#e0f2fe;color:#075985}
   .c-H{background:#f3e8ff;color:#6b21a8}.c-M{background:#fef3c7;color:#92400e}.c-A{background:#ccfbf1;color:#115e59}
-  .c-Q{background:#fce7f3;color:#9d174d}.c-G{background:#ffedd5;color:#9a3412}.c-B{background:#f1f5f9;color:#334155}
+  .c-Q{background:#fce7f3;color:#9d174d}.c-G{background:#ffedd5;color:#9a3412}.c-B{background:var(--chip);color:var(--chipt)}
   .c-X{background:#fee2e2;color:#991b1b}.c-I{background:#ede9fe;color:#5b21b6}.c-P{background:#e2e8f0;color:#0f172a;border-color:#94a3b8}
+  html[data-tema=dark] .c-L{background:#1e3a8a66;color:#93c5fd} html[data-tema=dark] .c-D{background:#14532d66;color:#86efac} html[data-tema=dark] .c-C{background:#07598566;color:#7dd3fc}
+  html[data-tema=dark] .c-H{background:#581c8766;color:#d8b4fe} html[data-tema=dark] .c-M{background:#78350f66;color:#fcd34d} html[data-tema=dark] .c-A{background:#134e4a99;color:#5eead4}
+  html[data-tema=dark] .c-Q{background:#83184366;color:#f9a8d4} html[data-tema=dark] .c-G{background:#7c2d1266;color:#fdba74} html[data-tema=dark] .c-X{background:#7f1d1d66;color:#fca5a5}
+  html[data-tema=dark] .c-I{background:#4c1d9566;color:#c4b5fd} html[data-tema=dark] .c-P{background:#33415599;color:#e2e8f0;border-color:#64748b}
   .chip.ok{background:var(--okb);color:var(--ok)} .chip.no{background:var(--badb);color:var(--bad)} .chip.mid{background:var(--midb);color:var(--mid)}
   .pri-h{display:flex;align-items:baseline;gap:8px;margin:12px 0 6px;font-weight:700;font-size:14px}
   .pri-h small{font-weight:400;color:var(--mut)}
@@ -60,7 +68,7 @@
   .score{display:flex;align-items:center;gap:16px}
   .score .big{font-size:44px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
   .score .lbl{font-weight:700}
-  .meter{height:10px;border-radius:9px;background:#e5e7eb;overflow:hidden;margin-top:8px}
+  .meter{height:10px;border-radius:9px;background:var(--meter);overflow:hidden;margin-top:8px}
   .meter i{display:block;height:100%;border-radius:9px}
   .s-ok{color:var(--ok)} .s-mid{color:var(--mid)} .s-bad{color:var(--bad)}
   .b-ok{background:var(--ok)} .b-mid{background:#d97706} .b-bad{background:var(--bad)}
@@ -82,7 +90,8 @@
   .badge{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:999px}
   .badge.ok{background:var(--okb);color:var(--ok)} .badge.mid{background:var(--midb);color:var(--mid)} .badge.bad{background:var(--badb);color:var(--bad)}
   /* Diálogo */
-  .dlg{border:1px solid var(--bd);border-radius:16px;padding:18px;width:min(520px,94vw);color:var(--tx)}
+  .dlg{border:1px solid var(--bd);border-radius:16px;padding:18px;width:min(560px,94vw);color:var(--tx);background:var(--card)}
+  .dlg label{margin-top:10px}
   .dlg::backdrop{background:rgba(15,23,42,.35)}
   .dlg h3{margin:0 0 12px;color:var(--tx);text-transform:none;font-size:17px;letter-spacing:0}
   .dlg .acts{justify-content:flex-end}
@@ -90,6 +99,27 @@
   #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#1c1f26;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:9999;max-width:90vw;text-align:center}
   #toast.on{opacity:1;transform:translateX(-50%)}
   .printonly{display:none}
+  /* IA */
+  .ia{border-color:#99d5cc} html[data-tema=dark] .ia{border-color:#1f5a52}
+  .ia h2 small{font-weight:400;color:var(--mut);font-size:12px}
+  .sug{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+  .sug label{flex-direction:row;align-items:flex-start;gap:8px;color:var(--tx);font-size:14px;padding:6px 0;border-top:1px solid var(--bd)}
+  .sug input{width:18px;height:18px;flex:none;margin-top:2px;accent-color:var(--ac)}
+  .vs2{display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
+  .vs2 div{font-size:13px;color:var(--mut)} .vs2 b{display:block;font-size:30px;line-height:1.1}
+  .seg{display:flex;border:1px solid var(--bd2);border-radius:10px;overflow:hidden;margin-bottom:12px}
+  .seg button{flex:1;border:0;background:var(--card);color:var(--tx);padding:8px;font:14px system-ui,sans-serif;cursor:pointer}
+  .seg button.on{background:var(--ac);color:var(--onac);font-weight:600}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--bd2);border-top-color:var(--ac);border-radius:50%;animation:gira .8s linear infinite;vertical-align:-2px}
+  @keyframes gira{to{transform:rotate(360deg)}}
+  code{background:var(--chip);padding:1px 5px;border-radius:5px;font-size:13px}
+  /* Bloque de versión en modo oscuro */
+  html[data-tema=dark] .vs-ver{background:var(--card);color:var(--mut);border-color:var(--bd2)}
+  html[data-tema=dark] .vs-dlg{background:var(--card);color:var(--tx);border-color:var(--bd)}
+  html[data-tema=dark] .vs-dlg .vs-mut,html[data-tema=dark] .vs-dlg .vs-rel pre{color:var(--mut)}
+  html[data-tema=dark] .vs-dlg .vs-rel{border-color:var(--bd)}
+  html[data-tema=dark] .vs-dlg .vs-acts button,html[data-tema=dark] .vs-dlg .vs-acts a{background:var(--card);color:var(--tx);border-color:var(--bd2)}
+  html[data-tema=dark] .vs-dlg .vs-acts .vs-pri{background:var(--ac);border-color:var(--ac);color:var(--onac)}
   .src{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;color:var(--mut);background:var(--ac2);border-radius:9px;padding:6px 10px;margin-top:8px}
   .imp{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 10px}
   .busy{opacity:.6;pointer-events:none}
@@ -102,7 +132,8 @@
     main{padding:0;max-width:none}
     .card{break-inside:avoid;border-color:#bbb}
     .printonly{display:block;margin:0 0 10px}
-    .chip{border:1px solid #ccc}
+    html,html[data-tema=dark]{color-scheme:light;--bg:#fff;--card:#fff;--tx:#111;--mut:#555;--bd:#ccc;--ok:#15803d;--okb:#fff;--mid:#b45309;--midb:#fff;--bad:#b91c1c;--badb:#fff;--chip:#fff;--chipt:#111;--meter:#e5e7eb}
+    .chip,html[data-tema=dark] .chip{border:1px solid #bbb;background:#fff!important;color:#111!important}
   }
 </style>
 </head>
@@ -869,6 +900,157 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
 })(window);
 </script>
 
+<!-- ===== IA: conexión (Apps Script o clave directa), prompts y normalización. Expone window.IA ===== -->
+<script id="ia">
+(function(root){
+  "use strict";
+  const KEYC = "jobpost_ia_v1";              // configuración de IA: queda aparte y NO va en el backup
+  const DEF = {modo: "gas", url: "", token: "", prov: "gemini", clave: "", modelo: "", okCV: false};
+  const MOD = {claude: "claude-haiku-5-5", gemini: "gemini-flash-latest"};
+  const cfg = () => { try{ return Object.assign({}, DEF, JSON.parse(localStorage.getItem(KEYC) || "{}")); }catch(e){ return {...DEF}; } };
+  const guardar = c => { try{ localStorage.setItem(KEYC, JSON.stringify(c)); }catch(e){} };
+  const lista = (c = cfg()) => c.modo === "gas" ? /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec\/?$/.test(c.url.trim()) && !!c.token.trim() : !!c.clave.trim();
+  const quien = (c = cfg()) => c.modo === "gas" ? "tu Apps Script" : c.prov === "claude" ? "Claude (Anthropic)" : "Gemini (Google)";
+  const modeloDef = (c = cfg()) => c.modo === "gas" ? "el definido en el script" : MOD[c.prov];
+
+  async function llamar(system, prompt, maxTok = 4000, extra = {}, c = cfg()){
+    if(!lista(c)) throw Object.assign(new Error("Falta configurar la IA."), {config: true});
+    const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), 120000);
+    try{
+      if(c.modo === "gas"){
+        const r = await fetch(c.url.trim(), {method: "POST", signal: ctrl.signal, headers: {"Content-Type": "text/plain;charset=utf-8"},
+          body: JSON.stringify({token: c.token.trim(), system, prompt, max_tokens: maxTok, modelo: c.modelo.trim(), ...extra})});
+        const j = await r.json().catch(() => null);
+        if(!j) throw new Error("Apps Script no devolvió una respuesta válida. Revisá que esté implementado como Aplicación web con acceso para “Cualquier usuario”.");
+        if(j.error) throw new Error("Apps Script: " + j.error);
+        return {texto: j.texto || "", modelo: j.modelo || "", uso: j.usados ? `${j.usados} de ${j.limite} consultas hoy` : ""};
+      }
+      if(c.prov === "claude"){
+        const m = c.modelo.trim() || MOD.claude;
+        const r = await fetch("https://api.anthropic.com/v1/messages", {method: "POST", signal: ctrl.signal,
+          headers: {"content-type": "application/json", "x-api-key": c.clave.trim(), "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true"},
+          body: JSON.stringify({model: m, max_tokens: maxTok, system, messages: [{role: "user", content: prompt}]})});
+        const j = await r.json().catch(() => ({}));
+        if(!r.ok) throw new Error("Claude: " + ((j.error && j.error.message) || "error " + r.status));
+        return {texto: (j.content || []).filter(b => b.type === "text").map(b => b.text).join(""), modelo: j.model || m};
+      }
+      const m = c.modelo.trim() || MOD.gemini;
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent`, {method: "POST", signal: ctrl.signal,
+        headers: {"content-type": "application/json", "x-goog-api-key": c.clave.trim()},
+        body: JSON.stringify({systemInstruction: {parts: [{text: system}]}, contents: [{role: "user", parts: [{text: prompt}]}],
+          generationConfig: {maxOutputTokens: maxTok * 2, responseMimeType: "application/json"}})});
+      const j = await r.json().catch(() => ({}));
+      if(!r.ok) throw new Error("Gemini: " + ((j.error && j.error.message) || "error " + r.status));
+      const cand = (j.candidates || [])[0];
+      return {texto: ((cand && cand.content && cand.content.parts) || []).map(p => p.text || "").join(""), modelo: m};
+    }catch(e){
+      if(e.name === "AbortError") throw new Error("La IA tardó demasiado en responder. Probá de nuevo.");
+      if(e instanceof TypeError) throw new Error(`No se pudo conectar con ${quien(c)}. Revisá la conexión a internet y la configuración.`);
+      throw e;
+    }finally{ clearTimeout(to); }
+  }
+  async function probar(c){
+    if(c.modo === "gas") return llamar("", "", 20, {prueba: true}, c);
+    return llamar('Respondé solo con JSON válido.', 'Devolvé exactamente {"ok":true}', 50, {}, c);
+  }
+
+  // ---------- JSON de la respuesta ----------
+  function json(t){
+    t = String(t || "").replace(/^\s*```(?:json)?/i, "").replace(/```\s*$/, "");
+    const a = t.indexOf("{"), b = t.lastIndexOf("}");
+    if(a < 0 || b <= a) throw new Error("La IA no devolvió datos en el formato esperado. Probá de nuevo.");
+    try{ return JSON.parse(t.slice(a, b + 1)); }catch(e){ throw new Error("La respuesta de la IA llegó incompleta o mal formada. Probá de nuevo."); }
+  }
+  const S = (v, n = 400) => typeof v === "string" ? v.trim().slice(0, n) : "";
+  const SA = (v, max = 12, n = 400) => (Array.isArray(v) ? v : []).map(x => S(x, n)).filter(Boolean).slice(0, max);
+  const PRIO = {excluyente: "exc", requisito: "req", tarea: "resp", responsabilidad: "resp", deseable: "des"};
+  const CATS = "L=Lenguajes y frameworks, D=Datos y BI, C=Cloud y DevOps, H=Herramientas, M=Metodologías, A=Análisis y negocio, Q=Calidad y testing, G=Gestión, B=Habilidades blandas, X=Certificaciones, I=Industria o sector";
+  const terminos = v => (Array.isArray(v) ? v : []).slice(0, 50).map(t => t && typeof t === "object" ? {
+    termino: S(t.termino, 80), nombre: S(t.nombre, 80) || S(t.termino, 80), categoria: /^[LDCHMAQGBXI]$/.test(S(t.categoria, 1).toUpperCase()) ? S(t.categoria, 1).toUpperCase() : "P",
+    prioridad: PRIO[S(t.prioridad, 20).toLowerCase()] || "otro", es: SA(t.sinonimos_es, 6, 60), en: SA(t.sinonimos_en, 6, 60)} : null).filter(t => t && t.nombre);
+  function normAviso(o){
+    o = o || {};
+    return {resumen: S(o.resumen, 900), seniority: S(o.seniority, 60), anios: Number.isFinite(+o.anios_experiencia) && o.anios_experiencia !== null && o.anios_experiencia !== "" ? Math.min(40, Math.max(0, +o.anios_experiencia)) : null,
+      modalidad: S(o.modalidad, 60), terminos: terminos(o.terminos), consejos: SA(o.consejos, 10), alertas: SA(o.alertas, 8), at: +o.at || Date.now(), modelo: S(o.modelo, 80)};
+  }
+  function normMatch(o){
+    o = o || {};
+    const p = Math.round(+o.puntaje);
+    return {puntaje: Number.isFinite(p) ? Math.min(100, Math.max(0, p)) : null, veredicto: S(o.veredicto, 400), fortalezas: SA(o.fortalezas, 10),
+      brechas: (Array.isArray(o.brechas) ? o.brechas : []).slice(0, 12).map(b => typeof b === "string" ? {requisito: S(b, 200), detalle: ""} : {requisito: S(b && b.requisito, 200), detalle: S(b && b.detalle, 400)}).filter(b => b.requisito),
+      sugerencias: (Array.isArray(o.sugerencias) ? o.sugerencias : []).slice(0, 10).map(s => typeof s === "string" ? {seccion: "", texto: S(s, 600)} : {seccion: S(s && s.seccion, 40), texto: S(s && s.texto, 600)}).filter(s => s.texto),
+      faltantes: SA(o.palabras_clave_faltantes || o.faltantes, 20, 80), terminos: terminos(o.terminos), at: +o.at || Date.now(), modelo: S(o.modelo, 80), cv: S(o.cv, 20)};
+  }
+
+  // ---------- Prompts ----------
+  const SYS = "Sos especialista en selección de personal y en sistemas ATS (Applicant Tracking Systems) del mercado laboral de Argentina y Latinoamérica. " +
+    "Respondés únicamente con un objeto JSON válido, sin texto antes ni después y sin bloques de código. Escribís en español rioplatense, claro y concreto. " +
+    "Nunca inventás experiencia, títulos ni datos del candidato: solo sugerís cómo expresar mejor lo que ya muestra o qué agregar si es verdad.";
+  const ESQ_T = '{"termino":"tal como aparece en el aviso","nombre":"nombre canónico corto (en español, o el nombre propio de la herramienta)","categoria":"una letra","prioridad":"excluyente|requisito|tarea|deseable","sinonimos_es":["..."],"sinonimos_en":["..."]}';
+  const REG_T = `En "terminos" incluí todas las habilidades, herramientas, metodologías, conocimientos, certificaciones e industrias que pide el aviso (máximo 40), también las que el motor local no detectó. Categorías: ${CATS}. Sinónimos: solo equivalentes reales que un ATS o un reclutador consideraría iguales, en minúsculas, máximo 5 por idioma.`;
+  function promptAviso(texto, local){
+    return `Analizá este aviso de trabajo.
+El motor local por reglas ya detectó: ${local.length ? local.join(", ") : "ningún término"}.
+Devolvé este JSON:
+{"resumen":"2 o 3 oraciones sobre el puesto y lo que más pesa","seniority":"","anios_experiencia":null,"modalidad":"","terminos":[${ESQ_T}],"consejos":["consejos concretos para adaptar el CV a este aviso"],"alertas":["puntos a tener en cuenta: requisitos contradictorios, datos que faltan, señales de alerta"]}
+${REG_T}
+AVISO:
+"""
+${String(texto).slice(0, 15000)}
+"""`;
+  }
+  function promptMatch(aviso, cv, score){
+    return `Compará este CV con el aviso de trabajo. El motor local por reglas estimó un match de ${score}%.
+Devolvé este JSON:
+{"puntaje":0,"veredicto":"una oración","fortalezas":["..."],"brechas":[{"requisito":"","detalle":"qué falta o qué no se ve claro en el CV"}],"sugerencias":[{"seccion":"Perfil|Experiencia|Habilidades|Educación|Idiomas|Formato","texto":"sugerencia concreta, con la redacción propuesta cuando sirva"}],"palabras_clave_faltantes":["términos del aviso que conviene sumar si son ciertos"],"terminos":[${ESQ_T}]}
+El puntaje (0 a 100) refleja qué tan bien pasaría un filtro ATS y una primera lectura de un reclutador. Lo que no está en el CV va en "brechas", nunca lo des por hecho. Máximo 8 sugerencias.
+${REG_T}
+AVISO:
+"""
+${String(aviso).slice(0, 12000)}
+"""
+CV:
+"""
+${String(cv).slice(0, 20000)}
+"""`;
+  }
+  async function analizarAviso(texto, local){
+    const r = await llamar(SYS, promptAviso(texto, local), 4000);
+    return normAviso({...json(r.texto), at: Date.now(), modelo: r.modelo});
+  }
+  async function analizarMatch(aviso, cv, score, cvHash){
+    const r = await llamar(SYS, promptMatch(aviso, cv, score), 5000);
+    return normMatch({...json(r.texto), at: Date.now(), modelo: r.modelo, cv: cvHash});
+  }
+
+  // ---------- Reglas sugeridas: lo que la IA encontró y el diccionario todavía no tiene ----------
+  function sugerencias(terms, dict, ATS){
+    const N = s => ATS.norm(s).trim().replace(/\s+/g, " ");
+    const ok = s => s.length >= 2 && s.length <= 60 && !/^\d+$/.test(s);
+    const porAlias = new Map(); dict.forEach(e => e.al.forEach(a => porAlias.set(a.t, e)));
+    const out = [], vistos = new Set();
+    terms.forEach(t => {
+      const es = [...new Set([t.termino, t.nombre, ...t.es].map(N).filter(ok))], en = [...new Set(t.en.map(N).filter(ok))].filter(x => !es.includes(x));
+      const todos = [...es, ...en]; if(!todos.length) return;
+      const e = todos.map(x => porAlias.get(x)).find(Boolean) || dict.find(d => d.id === N(t.nombre));
+      if(e){
+        const tiene = new Set(e.al.map(a => a.t));
+        const nes = es.filter(x => !tiene.has(x)), nen = en.filter(x => !tiene.has(x));
+        if(!nes.length && !nen.length) return;
+        const k = "s:" + e.id; if(vistos.has(k)) return; vistos.add(k);
+        out.push({tipo: "sinonimos", l: e.l, c: e.c, al: nes, en: nen, prioridad: t.prioridad});
+      } else {
+        const k = "n:" + N(t.nombre); if(vistos.has(k)) return; vistos.add(k);
+        out.push({tipo: "nuevo", l: t.nombre, c: t.categoria, al: es.filter(x => x !== N(t.nombre)), en, prioridad: t.prioridad});
+      }
+    });
+    return out.slice(0, 40);
+  }
+
+  root.IA = {cfg, guardar, lista, quien, modeloDef, MOD, llamar, probar, analizarAviso, analizarMatch, normAviso, normMatch, sugerencias, json};
+})(window);
+</script>
+
 <!-- ===== App ===== -->
 <script>
 (function(){
@@ -888,12 +1070,32 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
   const nivelTxt = s => s >= 75 ? "Alto" : s >= 50 ? "Medio" : "Bajo";
 
   // ---------- Estado ----------
-  const nuevo = () => ({aviso: {puesto: "", empresa: "", texto: ""}, cv: "", cvSrc: null, history: [], custom: [], tab: "aviso"});
+  const nuevo = () => ({aviso: {puesto: "", empresa: "", texto: ""}, cv: "", cvSrc: null, history: [], custom: [], reglas: {ver: 0, hist: []}, tema: "sistema", tab: "aviso"});
   let S;
   try{ S = Object.assign(nuevo(), JSON.parse(localStorage.getItem(KEY) || "null") || {}); }catch(e){ S = nuevo(); }
   let saveT;
   function save(){ clearTimeout(saveT); saveT = setTimeout(() => { try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ toast("No se pudo guardar en el navegador (espacio lleno)."); } }, 250); }
+  if(!S.reglas || typeof S.reglas !== "object" || !Array.isArray(S.reglas.hist)) S.reglas = {ver: 0, hist: []};
+  const IA = window.IA;
   let DICT = A.buildDict(S.custom);
+
+  // ---------- Tema (Sistema / Claro / Oscuro) ----------
+  const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+  function aplicarTema(){
+    const t = S.tema || "sistema", dark = t === "oscuro" || (t === "sistema" && !!(mq && mq.matches));
+    document.documentElement.dataset.tema = dark ? "dark" : "light";
+    const m = document.querySelector('meta[name="theme-color"]'); if(m) m.content = dark ? "#172024" : "#0f766e";
+  }
+  if(mq){ const f = () => { if((S.tema || "sistema") === "sistema") aplicarTema(); }; mq.addEventListener ? mq.addEventListener("change", f) : mq.addListener(f); }
+  aplicarTema();
+
+  // ---------- Versiones del conjunto de reglas propias ----------
+  const clonar = o => JSON.parse(JSON.stringify(o));
+  function versionar(motivo){
+    S.reglas.ver++;
+    S.reglas.hist.unshift({ver: S.reglas.ver, at: Date.now(), motivo, n: S.custom.length, custom: clonar(S.custom)});
+    if(S.reglas.hist.length > 30) S.reglas.hist.length = 30;
+  }
   const rebuild = () => { DICT = A.buildDict(S.custom); };
   let JOB = null, MATCH = null;
 
@@ -979,7 +1181,8 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
         <button class="btn pri" data-act="irMatch" type="button">🎯 Comparar con mi CV</button>
         <button class="btn" data-act="csvJob" type="button">⬇ CSV</button>
         <button class="btn" data-act="print" type="button">🖨 Imprimir / PDF</button>
-      </div></div>`;
+      </div></div>
+    <div id="iaAviso">${htmlIAAviso()}</div>`;
   }
 
   // ----- Match -----
@@ -1085,7 +1288,141 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
     <div class="card"><h2>Formato apto ATS</h2>${fc.length ? `<h3>Archivo: ${esc(S.cvSrc.nombre)} (${esc(S.cvSrc.tipo)})</h3><ul class="chk">${fc.map(li).join("")}</ul><h3>Contenido</h3>` : ""}<ul class="chk">${M.fmt.map(li).join("")}</ul>
       ${fc.length ? "" : '<p class="sm mut" style="margin:8px 0 0">Se revisa el texto pegado. Importá el PDF o el .docx para revisar también tablas, columnas, cuadros de texto e imágenes del archivo.</p>'}</div>
     <div class="card"><h2>Sugerencias</h2><ul class="recs">${recs.map(r => `<li>${esc(r)}</li>`).join("")}</ul>
-      <div class="acts noprint"><button class="btn" data-act="csvMatch" type="button">⬇ CSV</button><button class="btn" data-act="print" type="button">🖨 Imprimir / PDF</button></div></div>`;
+      <div class="acts noprint"><button class="btn" data-act="csvMatch" type="button">⬇ CSV</button><button class="btn" data-act="print" type="button">🖨 Imprimir / PDF</button></div></div>
+    <div id="iaMatch">${htmlIAMatch(M)}</div>`;
+  }
+
+  // ----- IA -----
+  const histActual = () => { const t = S.aviso.texto.trim(); return t ? S.history.find(x => x.h === hash(t)) : null; };
+  const SUG = {aviso: [], match: []};
+  let iaOcupado = "";
+  const PRI_IA = {exc: "excluyente", req: "requisito", resp: "tarea", des: "deseable", otro: ""};
+  const pie = r => `<p class="sm mut" style="margin:10px 0 0">Hecho con ${esc(r.modelo || "IA")} · ${fmtD(r.at)}. Es una opinión automática: revisala con criterio.</p>`;
+  const lst = (t, arr) => arr.length ? `<h3>${t}</h3><ul class="recs">${arr.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "";
+  function htmlConfigIA(){
+    return `<p class="sm mut">Todavía no configuraste la IA. Recomendado: un Apps Script propio, así tu clave no queda en el navegador.</p>
+      <div class="acts noprint"><button class="btn pri" data-act="iaConfig" type="button">⚙️ Configurar IA</button></div>`;
+  }
+  function htmlSug(origen){
+    const L = SUG[origen];
+    if(!L.length) return `<h3>Reglas sugeridas</h3><p class="sm mut">No hay términos nuevos para sumar: el diccionario ya conoce todo lo que encontró la IA.</p>`;
+    return `<h3>Reglas sugeridas para el motor local (${L.length})</h3>
+      <p class="sm mut">Términos y sinónimos que encontró la IA y el diccionario todavía no tiene. Elegí cuáles sumar: quedan como reglas propias, con versión para poder volver atrás.</p>
+      <div class="sug">${L.map((x, i) => `<label><input type="checkbox" data-sug="${origen}:${i}" checked><span><span class="chip c-${esc(x.c)}">${esc(x.l)}</span>
+        <span class="sm mut">${x.tipo === "nuevo" ? "término nuevo" : "sinónimos nuevos"}${PRI_IA[x.prioridad] ? " · " + PRI_IA[x.prioridad] : ""}${x.al.length || x.en.length ? ": " + esc([...x.al, ...x.en].join(", ")) : ""}</span></span></label>`).join("")}</div>
+      <div class="acts noprint"><button class="btn pri" data-act="iaAprobar" data-o="${origen}" type="button">✓ Sumar las elegidas</button><button class="btn" data-act="iaTodas" data-o="${origen}" type="button">Marcar / desmarcar todas</button></div>`;
+  }
+  function htmlIAAviso(){
+    const e = histActual(), r = e && e.ia && e.ia.aviso;
+    const head = `<h2>🤖 Análisis con IA <small>${IA.lista() ? "· " + esc(IA.quien()) : ""}</small></h2>`;
+    if(iaOcupado === "aviso") return `<div class="card ia">${head}<p><span class="spin"></span> Analizando el aviso…</p></div>`;
+    if(!r) return `<div class="card ia noprint">${head}<p class="sm mut">Complementa al motor local: resume el puesto, marca alertas, da consejos y encuentra términos que el diccionario no conoce para que los apruebes como reglas nuevas. Se envía el texto del aviso a ${esc(IA.quien())}.</p>
+      ${IA.lista() ? `<div class="acts noprint"><button class="btn pri" data-act="iaAviso" type="button">🤖 Analizar con IA</button></div>` : htmlConfigIA()}</div>`;
+    SUG.aviso = IA.sugerencias(r.terminos, DICT, A);
+    const nuevos = r.terminos.filter(t => !JOB || !JOB.skills.some(s => A.norm(s.l) === A.norm(t.nombre))).length;
+    return `<div class="card ia">${head}
+      ${r.resumen ? `<p>${esc(r.resumen)}</p>` : ""}
+      <dl class="kv">${r.seniority ? `<dt>Seniority</dt><dd>${esc(r.seniority)}</dd>` : ""}${r.anios !== null ? `<dt>Experiencia</dt><dd>${r.anios}+ años</dd>` : ""}${r.modalidad ? `<dt>Modalidad</dt><dd>${esc(r.modalidad)}</dd>` : ""}
+        <dt>Términos</dt><dd>${r.terminos.length} según la IA${nuevos ? ` · ${nuevos} que el motor local no marcó` : ""}</dd></dl>
+      ${lst("Alertas", r.alertas)}${lst("Consejos", r.consejos)}
+      <div class="noprint">${htmlSug("aviso")}</div>
+      ${pie(r)}<div class="acts noprint"><button class="btn" data-act="iaAviso" type="button">↻ Volver a analizar</button></div></div>`;
+  }
+  function htmlIAMatch(M){
+    const e = histActual(), r = e && e.ia && e.ia.match;
+    const head = `<h2>🤖 Match con IA <small>${IA.lista() ? "· " + esc(IA.quien()) : ""}</small></h2>`;
+    if(iaOcupado === "match") return `<div class="card ia">${head}<p><span class="spin"></span> Comparando tu CV con el aviso…</p></div>`;
+    if(!r) return `<div class="card ia noprint">${head}<p class="sm mut">Una segunda opinión, más cualitativa: fortalezas, brechas y sugerencias concretas por sección, sin inventar experiencia. Se envían el aviso y tu CV a ${esc(IA.quien())}.</p>
+      ${IA.lista() ? `<div class="acts noprint"><button class="btn pri" data-act="iaMatch" type="button">🤖 Comparar con IA</button></div>` : htmlConfigIA()}</div>`;
+    SUG.match = IA.sugerencias(r.terminos, DICT, A);
+    const viejo = r.cv && r.cv !== hash(S.cv.trim());
+    return `<div class="card ia">${head}
+      ${viejo ? `<p class="sm warn">Este análisis es de una versión anterior de tu CV. Volvé a comparar para actualizarlo.</p>` : ""}
+      <div class="vs2"><div>IA<b class="s-${nivel(r.puntaje ?? 0)}">${r.puntaje ?? "—"}${r.puntaje !== null ? "%" : ""}</b></div><div>Motor local<b class="s-${nivel(M.score)}">${M.score}%</b></div></div>
+      ${r.veredicto ? `<p>${esc(r.veredicto)}</p>` : ""}
+      ${lst("Fortalezas", r.fortalezas)}
+      ${r.brechas.length ? `<h3>Brechas</h3><ul class="recs">${r.brechas.map(b => `<li><b>${esc(b.requisito)}</b>${b.detalle ? ": " + esc(b.detalle) : ""}</li>`).join("")}</ul>` : ""}
+      ${r.sugerencias.length ? `<h3>Sugerencias</h3><ul class="recs">${r.sugerencias.map(x => `<li>${x.seccion ? `<b>${esc(x.seccion)}:</b> ` : ""}${esc(x.texto)}</li>`).join("")}</ul>` : ""}
+      ${r.faltantes.length ? `<h3>Palabras clave para sumar (si son ciertas)</h3><div class="chips">${r.faltantes.map(t => `<span class="chip mid">${esc(t)}</span>`).join("")}</div>` : ""}
+      <div class="noprint">${htmlSug("match")}</div>
+      ${pie(r)}<div class="acts noprint"><button class="btn" data-act="iaMatch" type="button">↻ Volver a comparar</button></div></div>`;
+  }
+  function errorIA(e){
+    if(e && e.config){ dlgIA(); return; }
+    dlg(`<h3>La IA no respondió</h3><p>${esc(e && e.message || e)}</p><div class="acts"><button class="btn" data-act="iaConfig" type="button">⚙️ Revisar configuración</button><button class="btn pri" data-x type="button">Cerrar</button></div>`);
+  }
+  async function iaAviso(){
+    if(!S.aviso.texto.trim()){ toast("Primero pegá un aviso."); return; }
+    if(!IA.lista()){ dlgIA(); return; }
+    if(!JOB) JOB = A.analyzeJob(S.aviso.texto, {dict: DICT});
+    guardarHist();
+    iaOcupado = "aviso"; const box = () => $("#iaAviso"); if(box()) box().innerHTML = htmlIAAviso();
+    try{
+      const r = await IA.analizarAviso(S.aviso.texto, JOB.skills.map(s => s.l));
+      const e = histActual(); if(e){ e.ia = e.ia || {}; e.ia.aviso = r; save(); }
+    }catch(err){ errorIA(err); }
+    finally{ iaOcupado = ""; if(box()) box().innerHTML = htmlIAAviso(); }
+  }
+  function enviarCV(fn){
+    const c = IA.cfg(); if(c.okCV){ fn(); return; }
+    dlg(`<h3>Enviar tu CV a la IA</h3><p>Para comparar, se envían el aviso y el texto de tu CV a <b>${esc(IA.quien())}</b>. Tu CV puede tener datos personales (teléfono, email, dirección).</p>
+      <p class="sm mut">Si usás el plan gratuito de Gemini, revisá sus condiciones: Google puede usar los datos enviados para mejorar sus productos.</p>
+      <label style="flex-direction:row;align-items:center;gap:8px;color:var(--tx)"><input type="checkbox" id="okCV" style="width:18px;height:18px"> No volver a preguntar</label>
+      <div class="acts"><button class="btn" data-x type="button">Cancelar</button><button class="btn pri" id="okEnviar" type="button">Enviar y comparar</button></div>`);
+    $("#okEnviar").onclick = () => { if($("#okCV").checked){ const k = IA.cfg(); k.okCV = true; IA.guardar(k); } $("#dlg").close(); fn(); };
+  }
+  async function iaMatch(){
+    if(!S.aviso.texto.trim() || !S.cv.trim()){ toast("Necesitás el aviso y tu CV."); return; }
+    if(!IA.lista()){ dlgIA(); return; }
+    enviarCV(async () => {
+      if(!MATCH) comparar(true);
+      iaOcupado = "match"; const box = () => $("#iaMatch"); if(box()) box().innerHTML = htmlIAMatch(MATCH);
+      try{
+        const r = await IA.analizarMatch(S.aviso.texto, S.cv, MATCH.score, hash(S.cv.trim()));
+        const e = histActual(); if(e){ e.ia = e.ia || {}; e.ia.match = r; save(); }
+      }catch(err){ errorIA(err); }
+      finally{ iaOcupado = ""; if(box()) box().innerHTML = htmlIAMatch(MATCH); }
+    });
+  }
+  function aprobar(origen){
+    const marcadas = [...document.querySelectorAll(`[data-sug^="${origen}:"]`)].filter(x => x.checked).map(x => SUG[origen][+x.dataset.sug.split(":")[1]]).filter(Boolean);
+    if(!marcadas.length){ toast("No elegiste ninguna."); return; }
+    marcadas.forEach(x => sumarRegla(x.l, x.al, x.c, x.en, "ia"));
+    versionar(`IA: ${marcadas.length} regla${marcadas.length > 1 ? "s" : ""} aprobada${marcadas.length > 1 ? "s" : ""} (${marcadas.slice(0, 3).map(x => x.l).join(", ")}${marcadas.length > 3 ? "…" : ""})`);
+    rebuild(); save();
+    toast(`${marcadas.length} regla${marcadas.length > 1 ? "s" : ""} sumada${marcadas.length > 1 ? "s" : ""} al motor local (reglas v${S.reglas.ver}).`);
+    if(S.tab === "aviso") analizar(false); else comparar(false);
+  }
+  function dlgIA(){
+    const c = IA.cfg();
+    dlg(`<h3>⚙️ Configurar IA</h3>
+      <label>Conexión<select id="iaModo"><option value="gas">Apps Script propio (recomendado)</option><option value="directo">Clave de API en este navegador</option></select></label>
+      <div id="iaGas">
+        <label>URL de la aplicación web (termina en /exec)<input id="iaUrl" value="${esc(c.url)}" placeholder="https://script.google.com/macros/s/…/exec" inputmode="url"></label>
+        <label>Token<div style="display:flex;gap:6px"><input id="iaTok" value="${esc(c.token)}" placeholder="El mismo que pusiste en TOKEN"><button class="btn xs" id="iaGen" type="button">Generar</button></div></label>
+        <p class="sm mut">Cómo crearlo (5 minutos, una vez): copiá <a href="https://github.com/luchorcompartidos/jobpost/blob/main/apps-script/Codigo.gs" target="_blank" rel="noopener">Codigo.gs</a> en un proyecto nuevo de <a href="https://script.google.com" target="_blank" rel="noopener">script.google.com</a>, cargá las propiedades <code>PROVEEDOR</code>, <code>CLAVE_API</code> y <code>TOKEN</code>, e implementalo como Aplicación web (Ejecutar como: Yo · Acceso: Cualquier usuario). Detalle en el <a href="https://github.com/luchorcompartidos/jobpost#ia" target="_blank" rel="noopener">README</a>.</p>
+      </div>
+      <div id="iaDir">
+        <label>Proveedor<select id="iaProv"><option value="gemini">Gemini (Google) · tiene plan gratuito</option><option value="claude">Claude (Anthropic) · pago por uso</option></select></label>
+        <label>Clave de API<input id="iaClave" type="password" value="${esc(c.clave)}" autocomplete="off" placeholder="Pegá tu clave"></label>
+        <p class="sm warn">La clave queda guardada en este navegador y en este dispositivo. No se incluye en el backup.</p>
+      </div>
+      <label>Modelo (opcional)<input id="iaModelo" value="${esc(c.modelo)}" placeholder=""></label>
+      <div id="iaMsg" class="sm" style="margin-top:8px"></div>
+      <div class="acts"><button class="btn" data-x type="button">Cancelar</button><button class="btn" id="iaProbar" type="button">Probar</button><button class="btn pri" id="iaOk" type="button">Guardar</button></div>`);
+    const leer = () => ({...IA.cfg(), modo: $("#iaModo").value, url: $("#iaUrl").value.trim(), token: $("#iaTok").value.trim(), prov: $("#iaProv").value, clave: $("#iaClave").value.trim(), modelo: $("#iaModelo").value.trim()});
+    const vista = () => { const k = leer(); $("#iaGas").style.display = k.modo === "gas" ? "" : "none"; $("#iaDir").style.display = k.modo === "gas" ? "none" : ""; $("#iaModelo").placeholder = "Por defecto: " + IA.modeloDef(k); };
+    $("#iaModo").value = c.modo; $("#iaProv").value = c.prov; vista();
+    $("#iaModo").onchange = vista; $("#iaProv").onchange = vista;
+    $("#iaGen").onclick = () => { const a = new Uint8Array(18); crypto.getRandomValues(a); $("#iaTok").value = [...a].map(x => x.toString(36).padStart(2, "0")).join("").slice(0, 28); toast("Token generado: copialo en la propiedad TOKEN del script."); };
+    $("#iaProbar").onclick = async () => {
+      const k = leer(), m = $("#iaMsg");
+      if(!IA.lista(k)){ m.innerHTML = `<span class="warn">${k.modo === "gas" ? "Completá la URL (/exec) y el token." : "Pegá la clave de API."}</span>`; return; }
+      m.innerHTML = '<span class="spin"></span> Probando…';
+      try{ const r = await IA.probar(k); m.innerHTML = `<span class="s-ok">✅ Conexión correcta${r.modelo ? " · modelo " + esc(r.modelo) : ""}${r.uso ? " · " + esc(r.uso) : ""}.</span>`; }
+      catch(e){ m.innerHTML = `<span class="s-bad">❌ ${esc(e.message)}</span>`; }
+    };
+    $("#iaOk").onclick = () => { IA.guardar(leer()); $("#dlg").close(); toast(IA.lista() ? "IA configurada." : "Configuración guardada (incompleta)."); render(); };
   }
 
   // ----- Historial -----
@@ -1133,13 +1470,17 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
       </div>
       <p class="sm mut">Si el término ya existe en la base, sus sinónimos se le suman.</p>
     </div>
+    <div class="card"><h2>Reglas propias · v${S.reglas.ver}</h2>
+      <p class="sm mut">${S.custom.length} reglas: ${S.custom.filter(c => c.src === "ia").length} aprobadas desde la IA, ${S.custom.filter(c => c.src === "manual").length} manuales y ${S.custom.filter(c => !["ia", "manual"].includes(c.src)).length} importadas. Cada cambio crea una versión nueva y podés volver a cualquiera de las últimas 30.</p>
+      <div class="acts"><button class="btn" data-act="reglasHist" type="button">🕘 Versiones</button><button class="btn" data-act="reglasExp" type="button">⬇ Exportar reglas (.json)</button><button class="btn" data-act="reglasImp" type="button">📂 Importar reglas</button></div>
+    </div>
     <div class="card"><h2>Términos propios</h2>
-      ${S.custom.length ? S.custom.map(c => `<div class="hrow"><div class="ht"><span class="chip c-${esc(c.c)}">${esc(c.l)}</span> <span class="sm mut">${esc(A.CATS[c.c] || "Propios")}${c.al && c.al.length ? " · " + esc(c.al.join(", ")) : ""}</span></div>
+      ${S.custom.length ? S.custom.map(c => `<div class="hrow"><div class="ht"><span class="chip c-${esc(c.c)}">${esc(c.l)}</span> <span class="sm mut">${c.src === "ia" ? "🤖 " : ""}${esc(A.CATS[c.c] || "Propios")}${[...(c.al || []), ...(c.en || [])].length ? " · " + esc([...(c.al || []), ...(c.en || [])].join(", ")) : ""}</span></div>
         <div class="ha"><button class="ic" data-act="delDic" data-id="${c.id}" type="button" title="Borrar">🗑</button></div></div>`).join("") : '<p class="mut">Todavía no agregaste términos. También podés sumarlos desde “Términos repetidos no catalogados” en el análisis del aviso.</p>'}
     </div>
     <div class="card"><h2>Buscar en el diccionario</h2>
       <input id="dB" placeholder="Buscá un término o sinónimo" value="${esc(busq)}"><div id="dRes" class="mt"></div>
-      <p class="sm mut">Próximamente: el motor con IA va a proponer términos y reglas nuevas para que las apruebes antes de sumarlas.</p></div>`;
+</div>`;
     const lst = () => {
       const q = A.norm(busq).trim(); const el = $("#dRes");
       if(q.length < 2){ el.innerHTML = '<p class="sm mut">Escribí al menos 2 letras.</p>'; return; }
@@ -1150,14 +1491,18 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
     $("#dB").oninput = e => { busq = e.target.value; lst(); };
     lst();
   }
-  function addCustom(l, al, c){
-    l = String(l || "").trim().slice(0, 80); if(!l){ toast("Escribí el término."); return false; }
-    const id = A.norm(l).trim();
+  function sumarRegla(l, alias, c, en, src){
+    l = String(l || "").trim().slice(0, 80); if(!l) return false;
+    const id = A.norm(l).trim(), lim = a => [...new Set((a || []).map(x => String(x).trim().slice(0, 80)).filter(Boolean))].slice(0, 30);
     const prev = S.custom.find(x => A.norm(x.l).trim() === id);
-    const alias = String(al || "").split(",").map(s => s.trim().slice(0, 80)).filter(Boolean).slice(0, 30);
-    if(prev){ prev.al = [...new Set([...(prev.al || []), ...alias])]; }
-    else S.custom.push({id: uid(), l, c: A.CATS[c] ? c : "P", al: alias, src: "manual", at: Date.now()});
-    rebuild(); save(); return true;
+    if(prev){ prev.al = lim([...(prev.al || []), ...(alias || [])]); prev.en = lim([...(prev.en || []), ...(en || [])]); }
+    else S.custom.push({id: uid(), l, c: A.CATS[c] ? c : "P", al: lim(alias), en: lim(en), src: src || "manual", at: Date.now()});
+    return true;
+  }
+  function addCustom(l, al, c){
+    if(!String(l || "").trim()){ toast("Escribí el término."); return false; }
+    sumarRegla(l, String(al || "").split(","), c, [], "manual");
+    versionar("Término agregado a mano: " + String(l).trim().slice(0, 60)); rebuild(); save(); return true;
   }
 
   // ---------- Exportar / importar ----------
@@ -1196,9 +1541,9 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
   }
   function backup(){
     const data = {app: "jobpost", tipo: "backup", formato: FORMATO, version: appV(), motor: A.MOTOR, exportado: new Date().toISOString(),
-      data: {aviso: S.aviso, cv: S.cv, cvSrc: S.cvSrc, history: S.history, custom: S.custom}};
+      data: {aviso: S.aviso, cv: S.cv, cvSrc: S.cvSrc, history: S.history, custom: S.custom, reglas: S.reglas}};
     bajar(`jobpost-backup-${hoy()}.json`, JSON.stringify(data, null, 2), "application/json");
-    toast("Backup descargado. Ojo: incluye tu CV.");
+    toast("Backup descargado. Incluye tu CV, pero no la configuración ni la clave de la IA.");
   }
   // Validación del JSON importado: solo datos, con tipos y largos controlados
   const str = (v, max) => typeof v === "string" ? v.slice(0, max) : "";
@@ -1213,13 +1558,19 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
       out.history.push({id: str(e.id, 20) || uid(), h: hash(t.trim()), at: +e.at || Date.now(), upd: +e.upd || +e.at || Date.now(), puesto: str(e.puesto, 200), empresa: str(e.empresa, 200), texto: t,
         res: e.res && typeof e.res === "object" ? {skills: +e.res.skills || 0, exc: +e.res.exc || 0, seniority: (Array.isArray(e.res.seniority) ? e.res.seniority : []).map(x => str(x, 40)).slice(0, 6),
           modalidad: (Array.isArray(e.res.modalidad) ? e.res.modalidad : []).map(x => str(x, 40)).slice(0, 4), top: (Array.isArray(e.res.top) ? e.res.top : []).map(x => str(x, 80)).slice(0, 8)} : null,
-        ...(typeof e.score === "number" && e.score >= 0 && e.score <= 100 ? {score: Math.round(e.score), scoreAt: +e.scoreAt || 0} : {})});
+        ...(typeof e.score === "number" && e.score >= 0 && e.score <= 100 ? {score: Math.round(e.score), scoreAt: +e.scoreAt || 0} : {}),
+        ...(e.ia && typeof e.ia === "object" ? {ia: {...(e.ia.aviso ? {aviso: IA.normAviso(e.ia.aviso)} : {}), ...(e.ia.match ? {match: IA.normMatch(e.ia.match)} : {})}} : {})});
     });
     (Array.isArray(d.custom) ? d.custom : []).slice(0, 2000).forEach(c => {
       if(!c || typeof c !== "object" || !str(c.l, 80).trim()) return;
       out.custom.push({id: str(c.id, 20) || uid(), l: str(c.l, 80).trim(), c: A.CATS[c.c] ? c.c : "P", al: (Array.isArray(c.al) ? c.al : []).map(x => str(x, 80).trim()).filter(Boolean).slice(0, 30),
+        en: (Array.isArray(c.en) ? c.en : []).map(x => str(x, 80).trim()).filter(Boolean).slice(0, 30),
         src: ["manual", "ia", "importado"].includes(c.src) ? c.src : "importado", at: +c.at || Date.now()});
     });
+    if(d.reglas && typeof d.reglas === "object" && Array.isArray(d.reglas.hist)){
+      out.reglas = {ver: Math.max(0, Math.min(1e6, +d.reglas.ver || 0)), hist: d.reglas.hist.slice(0, 30).filter(h => h && Array.isArray(h.custom)).map(h => {
+        const cc = limpiar({custom: h.custom}).custom; return {ver: +h.ver || 0, at: +h.at || Date.now(), motivo: str(h.motivo, 200), n: cc.length, custom: cc}; })};
+    }
     return out;
   }
   function importar(file){
@@ -1228,7 +1579,15 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
     const rd = new FileReader();
     rd.onload = () => {
       let o; try{ o = JSON.parse(rd.result); }catch(e){ toast("El archivo no es un JSON válido."); return; }
-      if(!o || o.app !== "jobpost" || o.tipo !== "backup" || !o.data){ toast("Este JSON no es un backup de Job Post ATS."); return; }
+      if(o && o.app === "jobpost" && o.tipo === "reglas" && Array.isArray(o.reglas)){
+        if(+o.formato > FORMATO){ toast("Las reglas son de una versión más nueva de la app. Recargá para actualizarla."); return; }
+        const R = limpiar({custom: o.reglas}).custom;
+        dlg(`<h3>Importar reglas</h3><p>El archivo trae <b>${R.length}</b> reglas${o.ver ? ` (versión v${+o.ver})` : ""}. Se combinan con las tuyas: los sinónimos de términos repetidos se suman.</p>
+          <div class="acts"><button class="btn" data-x type="button">Cancelar</button><button class="btn pri" id="impR" type="button">Combinar</button></div>`);
+        $("#impR").onclick = () => { R.forEach(c => sumarRegla(c.l, c.al, c.c, c.en, c.src === "manual" ? "importado" : c.src)); versionar(`Importación de ${R.length} reglas`); rebuild(); save(); $("#dlg").close(); render(); toast(`Reglas importadas (ahora v${S.reglas.ver}).`); };
+        return;
+      }
+      if(!o || o.app !== "jobpost" || o.tipo !== "backup" || !o.data){ toast("Este JSON no es un backup ni un paquete de reglas de Job Post ATS."); return; }
       if(+o.formato > FORMATO){ toast("El backup es de una versión más nueva de la app. Recargá para actualizarla."); return; }
       const d = limpiar(o.data);
       dlg(`<h3>Importar backup</h3><p>El archivo trae <b>${d.history.length}</b> avisos, <b>${d.custom.length}</b> términos propios${d.cv ? " y un CV" : ""}${o.exportado ? ` (exportado el ${esc(fmtD(o.exportado))})` : ""}.</p>
@@ -1237,12 +1596,14 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
       $("#impComb").onclick = () => {
         d.history.forEach(e => { const ex = S.history.find(x => x.h === e.h || x.id === e.id); if(!ex) S.history.push(e); else if((e.upd || 0) > (ex.upd || 0)) Object.assign(ex, e); });
         S.history.sort((a, b) => (b.upd || b.at) - (a.upd || a.at));
-        d.custom.forEach(c => { const ex = S.custom.find(x => A.norm(x.l).trim() === A.norm(c.l).trim()); if(ex) ex.al = [...new Set([...(ex.al || []), ...c.al])]; else S.custom.push(c); });
+        const antes = JSON.stringify(S.custom);
+        d.custom.forEach(c => sumarRegla(c.l, c.al, c.c, c.en, c.src));
+        if(JSON.stringify(S.custom) !== antes) versionar("Combinación con un backup");
         if(!S.cv.trim() && d.cv){ S.cv = d.cv; S.cvSrc = d.cvSrc; }
         if(!S.aviso.texto.trim() && d.aviso) S.aviso = d.aviso;
         fin("Backup combinado.");
       };
-      $("#impRep").onclick = () => { S.history = d.history; S.custom = d.custom; S.cv = d.cv; S.cvSrc = d.cvSrc; S.aviso = d.aviso || {puesto: "", empresa: "", texto: ""}; fin("Datos reemplazados por el backup."); };
+      $("#impRep").onclick = () => { S.history = d.history; S.custom = d.custom; S.reglas = d.reglas || {ver: 0, hist: []}; if(!d.reglas) versionar("Reemplazo por un backup"); S.cv = d.cv; S.cvSrc = d.cvSrc; S.aviso = d.aviso || {puesto: "", empresa: "", texto: ""}; fin("Datos reemplazados por el backup."); };
       function fin(m){ rebuild(); save(); $("#dlg").close(); render(); toast(m); }
     };
     rd.readAsText(file);
@@ -1257,7 +1618,12 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
     $("#okC").onclick = () => { $("#dlg").close(); fn(); };
   }
   $("#menuBtn").addEventListener("click", () => {
-    dlg(`<h3>Opciones</h3><div class="menu">
+    const t = S.tema || "sistema";
+    dlg(`<h3>Opciones</h3>
+      <div class="sm mut" style="margin-bottom:6px">Tema</div>
+      <div class="seg">${[["sistema", "🖥 Sistema"], ["claro", "☀️ Claro"], ["oscuro", "🌙 Oscuro"]].map(([k, l]) => `<button type="button" data-act="tema" data-v="${k}" class="${t === k ? "on" : ""}">${l}</button>`).join("")}</div>
+      <div class="menu">
+      <button class="btn" data-act="iaConfig" type="button">🤖 Configurar IA${IA.lista() ? " · " + esc(IA.quien()) : ""}</button>
       <button class="btn" data-act="backup" type="button">💾 Exportar backup (.json)</button>
       <button class="btn" data-act="importar" type="button">📂 Importar backup (.json)</button>
       <button class="btn" data-act="csvHist" type="button">⬇ Exportar historial (.csv)</button>
@@ -1305,6 +1671,18 @@ Ofrecemos:
     comparar: () => comparar(true),
     borrarCV: () => confirmar("Borrar CV", "Se borra el texto del CV guardado en este navegador.", "Borrar", () => { S.cv = ""; S.cvSrc = null; MATCH = null; save(); vMatch(); }),
     cvArchivo: () => $("#cvFile").click(), cvCvapp: () => dlgCvapp(), cvGoogle: () => dlgGoogle(),
+    tema: b => { S.tema = b.dataset.v; save(); aplicarTema(); document.querySelectorAll('[data-act="tema"]').forEach(x => x.classList.toggle("on", x === b)); },
+    iaConfig: () => dlgIA(), iaAviso: () => iaAviso(), iaMatch: () => iaMatch(), iaAprobar: b => aprobar(b.dataset.o),
+    iaTodas: b => { const cbs = [...document.querySelectorAll(`[data-sug^="${b.dataset.o}:"]`)]; const v = !cbs.every(x => x.checked); cbs.forEach(x => x.checked = v); },
+    reglasExp: () => bajar(`jobpost-reglas-v${S.reglas.ver}-${hoy()}.json`, JSON.stringify({app: "jobpost", tipo: "reglas", formato: FORMATO, ver: S.reglas.ver, motor: A.MOTOR, exportado: new Date().toISOString(), reglas: S.custom}, null, 2), "application/json"),
+    reglasImp: () => $("#fileIn").click(),
+    reglasHist: () => {
+      const H = S.reglas.hist;
+      dlg(`<h3>Versiones de reglas</h3>${H.length ? `<div style="max-height:60vh;overflow:auto">${H.map((h, i) => `<div class="hrow"><div class="ht"><b>v${h.ver}</b>${h.ver === S.reglas.ver ? ' <span class="badge ok">actual</span>' : ""} · <span class="sm mut">${fmtD(h.at)} · ${h.n} reglas</span><div class="sm">${esc(h.motivo)}</div></div>
+        <div class="ha">${h.ver === S.reglas.ver ? "" : `<button class="btn xs" data-act="reglasVolver" data-i="${i}" type="button">Volver a esta</button>`}</div></div>`).join("")}</div>` : '<p class="mut">Todavía no hay versiones: se crean al agregar, borrar, aprobar o importar reglas.</p>'}
+        <div class="acts"><button class="btn pri" data-x type="button">Cerrar</button></div>`);
+    },
+    reglasVolver: b => { const h = S.reglas.hist[+b.dataset.i]; if(!h) return; S.custom = clonar(h.custom); versionar(`Vuelta a la versión v${h.ver}`); rebuild(); save(); $("#dlg").close(); render(); toast(`Reglas restauradas a v${h.ver} (ahora v${S.reglas.ver}).`); },
     csvJob, csvMatch, csvHist, backup,
     print: () => { const d = $("#dlg"); if(d.open) d.close(); setTimeout(() => window.print(), 50); },
     addkw: b => { if(addCustom(b.dataset.t, "", "P")){ toast(`“${b.dataset.t}” sumado al diccionario.`); analizar(false); } },
@@ -1312,14 +1690,15 @@ Ofrecemos:
     delHist: b => confirmar("Borrar aviso", "Se borra este aviso del historial.", "Borrar", () => { S.history = S.history.filter(x => x.id !== b.dataset.id); save(); vHist(); }),
     clearHist: () => confirmar("Borrar historial", "Se borran todos los avisos del historial. Si querés conservarlos, exportá un backup antes.", "Borrar todo", () => { S.history = []; save(); vHist(); }),
     addDic: () => { if(addCustom($("#dT").value, $("#dA").value, $("#dC").value)){ toast("Término agregado."); vDic(); } },
-    delDic: b => { S.custom = S.custom.filter(x => x.id !== b.dataset.id); rebuild(); save(); vDic(); },
+    delDic: b => { const x = S.custom.find(c => c.id === b.dataset.id); S.custom = S.custom.filter(c => c.id !== b.dataset.id); versionar("Término borrado: " + (x ? x.l : "")); rebuild(); save(); vDic(); },
     importar: () => { $("#dlg").close(); $("#fileIn").click(); },
     privacidad: () => dlg(`<h3>Privacidad y datos</h3>
       <p>Todo se procesa y se guarda <b>solo en este navegador</b>: avisos, historial, tu CV y tus términos propios. Nada se sube al repositorio ni a otro servidor.</p>
       <p class="sm mut">Los archivos que importás (PDF, .docx, JSON) se leen en tu dispositivo y solo se guarda el texto extraído. Para leer PDF se descarga una vez la librería pdf.js desde un CDN público (no recibe tu archivo). Con “Documento de Google” la app pide el documento directamente a Google.</p>
+      <p class="sm mut">La IA es opcional: solo se usa cuando tocás “Analizar con IA” o “Comparar con IA”, y envía el aviso (y tu CV, en el match) al proveedor que configuraste. La clave de API y el token quedan aparte y no se incluyen en el backup.</p>
       <p class="sm mut">Si borrás los datos del navegador, se pierden: usá “Exportar backup” para tener una copia. El backup incluye tu CV, así que guardalo en un lugar privado.</p>
       <div class="acts"><button class="btn pri" data-x type="button">Entendido</button></div>`),
-    borrarTodo: () => confirmar("Borrar todos los datos", "Se borran el aviso, el CV, el historial y los términos propios de este navegador. No se puede deshacer.", "Borrar todo", () => { S = nuevo(); JOB = MATCH = null; rebuild(); save(); render(); toast("Datos borrados."); })
+    borrarTodo: () => confirmar("Borrar todos los datos", "Se borran el aviso, el CV, el historial, los términos propios y la configuración de IA de este navegador. No se puede deshacer.", "Borrar todo", () => { const tema = S.tema; S = nuevo(); S.tema = tema; try{ localStorage.removeItem("jobpost_ia_v1"); }catch(e){} JOB = MATCH = null; rebuild(); save(); render(); toast("Datos borrados."); })
   };
   document.addEventListener("click", e => {
     const b = e.target.closest("[data-act]"); if(!b || !ACT[b.dataset.act]) return;
