@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="app-version" content="v0.0.1">
+<meta name="app-version" content="v0.0.2">
 <meta name="theme-color" content="#0f766e">
 <title>Job Post ATS Analizer</title>
 <style>
@@ -70,6 +70,7 @@
   table.t td small{display:block;color:var(--mut);font-size:12px}
   .st{font-weight:600;min-width:92px}
   table.t td{overflow-wrap:anywhere}
+  table.t td:first-child{overflow-wrap:normal}
   @media (max-width:560px){ table.t{font-size:13px} table.t th:first-child,table.t td:first-child{width:28%} }
   ul.chk{list-style:none;margin:0;padding:0} ul.chk li{padding:5px 0;border-top:1px solid var(--bd);display:flex;gap:8px}
   ul.chk li:first-child{border-top:0}
@@ -89,6 +90,10 @@
   #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#1c1f26;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:9999;max-width:90vw;text-align:center}
   #toast.on{opacity:1;transform:translateX(-50%)}
   .printonly{display:none}
+  .src{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;color:var(--mut);background:var(--ac2);border-radius:9px;padding:6px 10px;margin-top:8px}
+  .imp{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 10px}
+  .busy{opacity:.6;pointer-events:none}
+  ol.pasos{margin:6px 0 0;padding-left:20px} ol.pasos li{margin:4px 0}
   @media (max-width:560px){ .g2{grid-template-columns:1fr} .g3{grid-template-columns:1fr 1fr} .kv{grid-template-columns:118px 1fr} .score .big{font-size:38px} }
   @media (max-width:420px){ nav button{font-size:12px} }
   @media print{
@@ -115,6 +120,7 @@
 <dialog class="dlg" id="dlg"></dialog>
 <div id="toast" role="status"></div>
 <input type="file" id="fileIn" accept=".json,application/json" hidden>
+<input type="file" id="cvFile" accept=".pdf,.docx,.doc,.txt,.md,.json,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/json" hidden>
 
 <!-- ===== Motor local por reglas (sin conexión). Expone window.ATS ===== -->
 <script id="motor">
@@ -622,6 +628,247 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
 })(typeof window !== "undefined" ? window : globalThis);
 </script>
 
+<!-- ===== Importación de CV: PDF, .docx, .txt, JSON (CVAPP, JSON Resume) y Documento de Google. Expone window.CVIMP ===== -->
+<script id="importador">
+(function(root){
+  "use strict";
+  const PDFJS = "https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/";
+  const MAX_MB = 15;
+  const ck = (ok, t) => ({ok, t});
+  const limpia = s => String(s ?? "").replace(/\r\n?/g, "\n").replace(/[ \t ]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  const sinHtml = s => String(s ?? "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div|li)>/gi, "\n").replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+  const letras = s => { const t = s.replace(/\s/g, ""); return t.length ? (t.match(/[\p{L}\p{N}.,;:()@\/+\-%]/gu) || []).length / t.length : 1; };
+
+  // ---------- ZIP mínimo (para .docx) con DecompressionStream nativo ----------
+  async function unzip(buf){
+    const dv = new DataView(buf); let eocd = -1;
+    for(let i = buf.byteLength - 22; i >= Math.max(0, buf.byteLength - 65557); i--){ if(dv.getUint32(i, true) === 0x06054b50){ eocd = i; break; } }
+    if(eocd < 0) throw new Error("El archivo no es un .docx válido.");
+    const n = dv.getUint16(eocd + 10, true); let p = dv.getUint32(eocd + 16, true);
+    const files = new Map(), dec = new TextDecoder();
+    for(let k = 0; k < n && p + 46 <= buf.byteLength; k++){
+      if(dv.getUint32(p, true) !== 0x02014b50) break;
+      const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+      files.set(dec.decode(new Uint8Array(buf, p + 46, nl)), {method, csize, off});
+      p += 46 + nl + xl + cl;
+    }
+    return {
+      names: [...files.keys()],
+      async text(name){
+        const f = files.get(name); if(!f) return null;
+        const start = f.off + 30 + dv.getUint16(f.off + 26, true) + dv.getUint16(f.off + 28, true);
+        const data = new Uint8Array(buf, start, f.csize); let out;
+        if(f.method === 0) out = data;
+        else if(f.method === 8){
+          if(typeof DecompressionStream === "undefined") throw new Error("Este navegador no puede abrir .docx. Actualizalo o usá PDF.");
+          out = new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer());
+        } else throw new Error("El .docx usa una compresión no soportada.");
+        return new TextDecoder("utf-8").decode(out);
+      }
+    };
+  }
+
+  // ---------- .docx ----------
+  const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+  function parrafos(doc){
+    const out = [];
+    for(const p of doc.getElementsByTagNameNS(W, "p")){
+      let t = "";
+      const walk = node => { for(const c of node.childNodes){
+        if(c.nodeType !== 1) continue;
+        const ln = c.localName;
+        if(ln === "txbxContent" || ln === "delText" || ln === "instrText" || ln === "del") continue;
+        if(ln === "t") t += c.textContent; else if(ln === "tab") t += " "; else if(ln === "br" || ln === "cr") t += "\n"; else walk(c);
+      } };
+      walk(p);
+      const lista = p.getElementsByTagNameNS(W, "numPr").length > 0;
+      out.push((lista && t.trim() ? "- " : "") + t);
+    }
+    return out.join("\n");
+  }
+  async function leerDocx(buf){
+    const z = await unzip(buf);
+    const xml = await z.text("word/document.xml");
+    if(!xml) throw new Error("El archivo no es un .docx válido.");
+    const doc = new DOMParser().parseFromString(xml, "application/xml");
+    const texto = limpia(parrafos(doc));
+    const tablas = doc.getElementsByTagNameNS(W, "tbl").length;
+    const cajas = doc.getElementsByTagNameNS(W, "txbxContent").length;
+    const imgs = doc.getElementsByTagNameNS(W, "drawing").length + doc.getElementsByTagNameNS(W, "pict").length - cajas;
+    const cols = [...doc.getElementsByTagNameNS(W, "cols")].some(c => +(c.getAttributeNS(W, "num") || c.getAttribute("w:num") || 1) > 1);
+    let encab = "";
+    for(const nm of z.names.filter(n => /^word\/(header|footer)\d*\.xml$/.test(n))){ const x = await z.text(nm); if(x) encab += "\n" + parrafos(new DOMParser().parseFromString(x, "application/xml")); }
+    encab = limpia(encab);
+    const contacto = /[\w.%+-]+@[\w.-]+\.[a-z]{2,}|\+?\d[\d\s().-]{7,}\d/i;
+    const checks = [
+      ck(true, "Formato .docx: lo leen todos los ATS"),
+      ck(!tablas, tablas ? `Tiene ${tablas} tabla${tablas > 1 ? "s" : ""}: algunos ATS desordenan o pierden su contenido` : "Sin tablas"),
+      ck(!cajas, cajas ? `Tiene ${cajas} cuadro${cajas > 1 ? "s" : ""} de texto: muchos ATS no los leen (su texto no se tuvo en cuenta)` : "Sin cuadros de texto"),
+      ck(!cols, cols ? "Diseño en columnas de Word: algunos ATS mezclan el orden del texto" : "Una sola columna")
+    ];
+    if(imgs > 0) checks.push(ck(null, `Tiene ${imgs} imagen${imgs > 1 ? "es" : ""}: el texto dentro de imágenes no se lee (una foto no es problema)`));
+    if(encab) checks.push(ck(!(contacto.test(encab) && !contacto.test(texto)), contacto.test(encab) && !contacto.test(texto)
+      ? "Los datos de contacto están en el encabezado o pie de página: varios ATS no leen esa zona" : "Encabezado o pie de página con texto (revisá que no haya datos clave solo ahí)"));
+    return {texto, tipo: "Word (.docx)", checks};
+  }
+
+  // ---------- PDF (pdf.js desde CDN, se carga la primera vez) ----------
+  let pdfjsP = null;
+  function cargarPdfjs(){
+    if(!pdfjsP) pdfjsP = import(root.JP_PDFJS || PDFJS + "pdf.min.mjs").then(m => { m.GlobalWorkerOptions.workerSrc = root.JP_PDFJS_WORKER || PDFJS + "pdf.worker.min.mjs"; return m; })
+      .catch(() => { pdfjsP = null; throw new Error("No se pudo cargar el lector de PDF. Revisá la conexión a internet y probá de nuevo."); });
+    return pdfjsP;
+  }
+  function filas(items){
+    items.sort((a, b) => b.y - a.y || a.x - b.x);
+    const rows = [];
+    items.forEach(it => { const r = rows[rows.length - 1]; if(r && Math.abs(r.y - it.y) <= Math.max(2, it.h * .45)) r.items.push(it); else rows.push({y: it.y, items: [it]}); });
+    rows.forEach(r => r.items.sort((a, b) => a.x - b.x));
+    return rows;
+  }
+  function unir(items){
+    let t = "", fin = null;
+    items.forEach(it => { if(fin !== null && it.x - fin > it.h * .15 && !/\s$/.test(t) && !/^\s/.test(it.s)) t += " "; t += it.s; fin = it.x + it.w; });
+    return t;
+  }
+  async function leerPdf(buf){
+    const pdfjs = await cargarPdfjs();
+    let pdf;
+    try{ pdf = await pdfjs.getDocument({data: new Uint8Array(buf), isEvalSupported: false}).promise; }
+    catch(e){ throw new Error(/password/i.test(e && e.name || "") ? "El PDF tiene contraseña: guardalo sin contraseña e importalo de nuevo." : "No se pudo leer el PDF (¿está dañado?)."); }
+    const paginas = pdf.numPages, partes = []; let chars = 0, colPags = 0, imgs = 0;
+    const O = pdfjs.OPS || {}, IMG = new Set([O.paintImageXObject, O.paintInlineImageXObject, O.paintImageXObjectRepeat].filter(x => x !== undefined));
+    for(let i = 1; i <= paginas; i++){
+      const page = await pdf.getPage(i), ancho = page.getViewport({scale: 1}).width;
+      const tc = await page.getTextContent();
+      const items = tc.items.filter(it => it.str && it.str.trim()).map(it => ({s: it.str, x: it.transform[4], y: it.transform[5], w: it.width || 0, h: Math.abs(it.transform[3]) || 10}));
+      chars += items.reduce((a, b) => a + b.s.length, 0);
+      const rows = filas(items);
+      // Columnas: muchas filas con un hueco grande en el medio
+      const huecos = [];
+      rows.forEach(r => { let best = 0, pos = 0; for(let k = 1; k < r.items.length; k++){ const a = r.items[k - 1], g = r.items[k].x - (a.x + a.w); if(g > best){ best = g; pos = a.x + a.w + g / 2; } } if(best > ancho * .12) huecos.push(pos); });
+      if(huecos.length >= Math.max(5, rows.length * .3)){
+        colPags++;
+        huecos.sort((a, b) => a - b); const corte = huecos[Math.floor(huecos.length / 2)];
+        const izq = filas(items.filter(it => it.x < corte)), der = filas(items.filter(it => it.x >= corte));
+        partes.push(izq.map(r => unir(r.items)).join("\n") + "\n\n" + der.map(r => unir(r.items)).join("\n"));
+      } else partes.push(rows.map(r => unir(r.items)).join("\n"));
+      try{ const ops = await page.getOperatorList(); ops.fnArray.forEach(f => { if(IMG.has(f)) imgs++; }); }catch(e){}
+      page.cleanup && page.cleanup();
+    }
+    const texto = limpia(partes.join("\n\n"));
+    const escaneado = chars < 80 * paginas;
+    const raro = !escaneado && letras(texto) < .8;
+    const checks = [
+      ck(!escaneado, escaneado ? "Casi no tiene texto seleccionable (parece escaneado o una imagen): los ATS no lo pueden leer" : "Texto seleccionable"),
+      ck(!raro, raro ? "El texto extraído sale con caracteres raros: la fuente del PDF no es legible para un ATS" : "El texto se extrae sin caracteres raros"),
+      ck(!colPags, colPags ? `Diseño a dos columnas en ${colPags} página${colPags > 1 ? "s" : ""}: algunos ATS mezclan el orden del texto (acá se reordenó para analizarlo)` : "Una sola columna"),
+      ck(paginas <= 2 ? true : null, `${paginas} página${paginas > 1 ? "s" : ""}${paginas > 2 ? " (lo habitual es 1 o 2)" : ""}`)
+    ];
+    if(imgs > 0) checks.push(ck(null, `Tiene ${imgs} imagen${imgs > 1 ? "es" : ""}: el texto dentro de imágenes no se lee (una foto o un logo no es problema)`));
+    if(escaneado && !texto) throw Object.assign(new Error("El PDF no tiene texto seleccionable (parece escaneado). Exportalo de nuevo desde el editor original como PDF con texto, o pegá el texto a mano."), {checks});
+    return {texto, tipo: "PDF", paginas, checks};
+  }
+
+  // ---------- JSON ----------
+  const SEC_CVAPP = {experience: "Experiencia", education: "Educación", courses: "Cursos y certificaciones", skillsHard: "Habilidades", skillsSoft: "Habilidades blandas", languages: "Idiomas"};
+  function cvapp(c){
+    const oculto = new Set(Array.isArray(c.hiddenSections) ? c.hiddenSections : []);
+    const L = [], s = v => sinHtml(typeof v === "string" ? v : "").trim();
+    if(s(c.fullName)) L.push(s(c.fullName));
+    if(s(c.jobTitle)) L.push(s(c.jobTitle));
+    if(!oculto.has("contact")){
+      const ct = Array.isArray(c.contactItems) ? c.contactItems.filter(x => x && !["cuil", "birth"].includes(x.type)).map(x => s(x.value))
+        : c.contact && typeof c.contact === "object" ? ["location", "phone", "email", "linkedin", "github"].map(k => s(c.contact[k])) : [];
+      if(ct.filter(Boolean).length) L.push(ct.filter(Boolean).join(" | "));
+    }
+    if(!oculto.has("profile") && s(c.profileSummary)) L.push("", "Perfil", s(c.profileSummary));
+    const sec = (k, fn) => { if(oculto.has(k) || !Array.isArray(c[k])) return; const rows = c[k].map(x => fn(x || {}).trim()).filter(t => t && !/^[—()·\s]*$/.test(t)); if(rows.length) L.push("", SEC_CVAPP[k], ...rows); };
+    sec("experience", x => [[s(x.role), s(x.company)].filter(Boolean).join(" — ") + (s(x.period) ? ` (${s(x.period)})` : ""), s(x.location), s(x.description)].filter(Boolean).join("\n"));
+    sec("education", x => [s(x.degree), s(x.institution)].filter(Boolean).join(" — ") + (s(x.period) ? ` (${s(x.period)})` : "") + (s(x.status) ? ` · ${s(x.status)}` : ""));
+    sec("courses", x => [s(x.title), s(x.institution)].filter(Boolean).join(" — ") + (s(x.year) ? ` (${s(x.year)})` : ""));
+    ["skillsHard", "skillsSoft"].forEach(k => { if(!oculto.has(k) && Array.isArray(c[k]) && c[k].length) L.push("", SEC_CVAPP[k], c[k].map(x => s(typeof x === "string" ? x : x && x.name)).filter(Boolean).join(", ")); });
+    sec("languages", x => s(x.name) + (s(x.level) ? `: ${s(x.level)}` : ""));
+    return limpia(L.join("\n"));
+  }
+  function jsonResume(o){
+    const L = [], s = v => typeof v === "string" ? v.trim() : "", b = o.basics || {};
+    [s(b.name), s(b.label), [s(b.email), s(b.phone), s(b.url), ...(Array.isArray(b.profiles) ? b.profiles.map(p => s(p && p.url)) : [])].filter(Boolean).join(" | ")].filter(Boolean).forEach(x => L.push(x));
+    if(s(b.summary)) L.push("", "Perfil", s(b.summary));
+    const sec = (t, arr, fn) => { if(!Array.isArray(arr)) return; const rows = arr.map(x => fn(x || {})).filter(Boolean); if(rows.length) L.push("", t, ...rows); };
+    const per = x => [s(x.startDate), s(x.endDate) || (s(x.startDate) ? "Actualidad" : "")].filter(Boolean).join(" - ");
+    sec("Experiencia", o.work, x => [[s(x.position), s(x.name) || s(x.company)].filter(Boolean).join(" — ") + (per(x) ? ` (${per(x)})` : ""), s(x.summary), ...(Array.isArray(x.highlights) ? x.highlights.map(h => "- " + s(h)) : [])].filter(Boolean).join("\n"));
+    sec("Educación", o.education, x => [[s(x.studyType), s(x.area)].filter(Boolean).join(" en "), s(x.institution)].filter(Boolean).join(" — ") + (per(x) ? ` (${per(x)})` : ""));
+    sec("Certificaciones", o.certificates, x => [s(x.name), s(x.issuer)].filter(Boolean).join(" — "));
+    sec("Proyectos", o.projects, x => [s(x.name), s(x.description)].filter(Boolean).join(": "));
+    sec("Habilidades", o.skills, x => [s(x.name), Array.isArray(x.keywords) ? x.keywords.map(s).join(", ") : ""].filter(Boolean).join(": "));
+    sec("Idiomas", o.languages, x => s(x.language) + (s(x.fluency) ? `: ${s(x.fluency)}` : ""));
+    return limpia(L.join("\n"));
+  }
+  function generico(o){
+    const L = [], salta = /^(id|uid|_id|photo|photourl|foto|imagen|image|picture|avatar|cuil|cuit|dni|birth|nacimiento)$/i;
+    const walk = (v, d) => {
+      if(d > 8 || L.length > 3000) return;
+      if(typeof v === "string"){ if(v.length < 5000 && !/^data:/.test(v)) L.push(sinHtml(v)); }
+      else if(Array.isArray(v)) v.forEach(x => walk(x, d + 1));
+      else if(v && typeof v === "object") Object.entries(v).forEach(([k, x]) => { if(!salta.test(k)) walk(x, d + 1); });
+    };
+    walk(o, 0); return limpia(L.join("\n"));
+  }
+  function desdeJSON(o){
+    if(!o || typeof o !== "object") throw new Error("El JSON está vacío o no tiene datos.");
+    if(o.app === "jobpost") throw new Error("Ese archivo es un backup de Job Post ATS: importalo desde el menú ⋯ → Importar backup.");
+    if(o.app === "editor-cv-argentina" && o.content && typeof o.content === "object")
+      return {texto: cvapp(o.content), tipo: "CVAPP (JSON)", checks: [ck(true, "Datos estructurados de CVAPP: se arman las secciones con títulos estándar"), ck(null, "El formato final depende de cómo lo exportes desde CVAPP: para postular, usá el diseño de una columna o el ATS")]};
+    if(o.basics || Array.isArray(o.work)) return {texto: jsonResume(o), tipo: "JSON Resume", checks: [ck(true, "Datos estructurados en formato JSON Resume")]};
+    return {texto: generico(o), tipo: "JSON", checks: [ck(null, "JSON con formato no reconocido: se tomaron todos sus textos, sin estructura de secciones")]};
+  }
+
+  // ---------- HTML a texto (Documento de Google publicado) ----------
+  function htmlTexto(html){
+    const d = new DOMParser().parseFromString(html, "text/html");
+    d.querySelectorAll("script,style,noscript,#header,#footer,#banners").forEach(e => e.remove());
+    const L = [];
+    d.body.querySelectorAll("p,li,h1,h2,h3,h4,h5,h6,td").forEach(e => { if(!e.querySelector("p,li,td")) L.push((e.tagName === "LI" ? "- " : "") + e.textContent); });
+    return limpia(L.length ? L.join("\n") : d.body.textContent);
+  }
+
+  // ---------- Entradas públicas ----------
+  async function leerArchivo(file){
+    if(!file) throw new Error("No se eligió ningún archivo.");
+    if(file.size > MAX_MB * 1024 * 1024) throw new Error(`El archivo pesa más de ${MAX_MB} MB.`);
+    const nombre = file.name || "archivo", ext = (nombre.match(/\.([a-z0-9]+)$/i) || [])[1]?.toLowerCase() || "";
+    let r;
+    if(ext === "pdf" || file.type === "application/pdf") r = await leerPdf(await file.arrayBuffer());
+    else if(ext === "docx") r = await leerDocx(await file.arrayBuffer());
+    else if(ext === "doc") throw new Error("El formato .doc (Word 97-2003) no se puede leer en el navegador. Abrilo en Word o Google Docs y guardalo como .docx o PDF.");
+    else if(ext === "json"){ let o; try{ o = JSON.parse(await file.text()); }catch(e){ throw new Error("El archivo no es un JSON válido."); } r = desdeJSON(o); }
+    else if(["txt", "md", "text"].includes(ext) || /^text\//.test(file.type)) r = {texto: limpia(await file.text()), tipo: "Texto", checks: [ck(null, "Texto plano: no se puede revisar el diseño del archivo original")]};
+    else if(["odt", "pages", "rtf"].includes(ext)) throw new Error(`El formato .${ext} no está soportado. Guardalo como .docx o PDF.`);
+    else throw new Error("Formato no soportado. Usá PDF, .docx, .txt o JSON.");
+    if(!r.texto) throw new Error("No se encontró texto en el archivo.");
+    return {...r, nombre};
+  }
+  async function leerGoogle(url){
+    url = String(url || "").trim();
+    const m = url.match(/docs\.google\.com\/document\/d\/(e\/)?([a-zA-Z0-9_-]{20,})/);
+    if(!m) throw new Error("El link no es de un Documento de Google (docs.google.com/document/…).");
+    const u = m[1] ? `https://docs.google.com/document/d/e/${m[2]}/pub` : `https://docs.google.com/document/d/${m[2]}/export?format=txt`;
+    let res;
+    try{ res = await fetch(u, {credentials: "omit", cache: "no-store"}); }
+    catch(e){ throw Object.assign(new Error("Google no dejó que la app lea el documento directamente."), {google: true}); }
+    if(!res.ok) throw Object.assign(new Error(res.status === 404 ? "No se encontró el documento: revisá el link." : "El documento no es público o Google no lo dejó leer."), {google: true});
+    const ct = res.headers.get("content-type") || "", body = await res.text();
+    const texto = /html/.test(ct) ? htmlTexto(body) : limpia(body.replace(/^﻿/, ""));
+    if(!texto || /ServiceLogin|accounts\.google\.com/.test(body.slice(0, 3000))) throw Object.assign(new Error("El documento no es público: Google pide iniciar sesión."), {google: true});
+    return {texto, tipo: "Documento de Google", nombre: "Documento de Google", checks: [ck(null, "Documento de Google: para postular, descargalo como .docx o PDF con texto (no como imagen)")]};
+  }
+
+  root.CVIMP = {leerArchivo, leerGoogle, desdeJSON, _test: {leerDocx, leerPdf, cvapp, htmlTexto}};
+})(window);
+</script>
+
 <!-- ===== App ===== -->
 <script>
 (function(){
@@ -641,7 +888,7 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
   const nivelTxt = s => s >= 75 ? "Alto" : s >= 50 ? "Medio" : "Bajo";
 
   // ---------- Estado ----------
-  const nuevo = () => ({aviso: {puesto: "", empresa: "", texto: ""}, cv: "", history: [], custom: [], tab: "aviso"});
+  const nuevo = () => ({aviso: {puesto: "", empresa: "", texto: ""}, cv: "", cvSrc: null, history: [], custom: [], tab: "aviso"});
   let S;
   try{ S = Object.assign(nuevo(), JSON.parse(localStorage.getItem(KEY) || "null") || {}); }catch(e){ S = nuevo(); }
   let saveT;
@@ -740,15 +987,72 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
     const hay = !!S.aviso.texto.trim();
     main.innerHTML = `<div class="card noprint"><h2>Match aviso + CV</h2>
       <p class="sm ${hay ? "mut" : "warn"}">${hay ? `Aviso: <b>${esc(S.aviso.puesto || "(sin título)")}</b>${S.aviso.empresa ? " · " + esc(S.aviso.empresa) : ""} — <a href="#" data-act="irAviso">cambiar</a>` : `Primero pegá un aviso en la pestaña <a href="#" data-act="irAviso">Aviso</a>.`}</p>
-      <label>Texto de tu CV<textarea id="fCV" rows="10" placeholder="Pegá el texto completo de tu CV.">${esc(S.cv)}</textarea></label>
-      <p class="sm mut">Tu CV queda guardado solo en este navegador. Próximamente: importar PDF, .docx y JSON, y leerlo desde CVAPP.</p>
+      <div class="imp">
+        <button class="btn" data-act="cvArchivo" type="button">📄 Importar archivo</button>
+        <button class="btn" data-act="cvCvapp" type="button">🧾 Desde CVAPP</button>
+        <button class="btn" data-act="cvGoogle" type="button">🔗 Documento de Google</button>
+      </div>
+      <label>Texto de tu CV<textarea id="fCV" rows="10" placeholder="Pegá el texto completo de tu CV o importalo (PDF, Word .docx, .txt, JSON).">${esc(S.cv)}</textarea></label>
+      <div id="cvSrc">${htmlSrc()}</div>
+      <p class="sm mut">Tu CV queda guardado solo en este navegador. Del archivo se guarda solo el texto extraído.</p>
       <div class="acts">
         <button class="btn pri" data-act="comparar" type="button">🎯 Comparar</button>
         <button class="btn" data-act="borrarCV" type="button">Borrar CV</button>
       </div></div><div id="resMatch"></div>`;
-    $("#fCV").oninput = e => { S.cv = e.target.value; save(); };
+    $("#fCV").oninput = e => { S.cv = e.target.value; if(S.cvSrc && !S.cvSrc.editado){ S.cvSrc.editado = true; $("#cvSrc").innerHTML = htmlSrc(); } save(); };
     if(hay && S.cv.trim()) comparar(false);
   }
+  function htmlSrc(){
+    const c = S.cvSrc; if(!c) return "";
+    return `<div class="src">📎 <span>Importado de <b>${esc(c.nombre)}</b> (${esc(c.tipo)}${c.paginas ? `, ${c.paginas} pág.` : ""}) · ${fmtD(c.at)}${c.editado ? " · editado a mano" : ""}</span></div>`;
+  }
+  function aplicarCV(r){
+    S.cv = r.texto;
+    S.cvSrc = {tipo: r.tipo, nombre: r.nombre, paginas: r.paginas || 0, at: Date.now(), checks: r.checks || []};
+    save();
+    if(S.tab !== "match"){ S.tab = "match"; render(); } else vMatch();
+    toast(`CV importado: ${r.tipo}${r.paginas ? `, ${r.paginas} pág.` : ""}.`);
+    if(S.aviso.texto.trim()) comparar(true);
+  }
+  async function importarCV(file){
+    if(!file) return;
+    const card = main.querySelector(".card"); card && card.classList.add("busy");
+    toast("Leyendo el archivo…");
+    try{ aplicarCV(await window.CVIMP.leerArchivo(file)); }
+    catch(e){ dlg(`<h3>No se pudo importar</h3><p>${esc(e.message)}</p>${e.checks ? `<ul class="chk">${e.checks.map(x => `<li><span>${x.ok === true ? "✅" : x.ok === false ? "❌" : "❔"}</span><span>${esc(x.t)}</span></li>`).join("")}</ul>` : ""}<div class="acts"><button class="btn pri" data-x type="button">Cerrar</button></div>`); }
+    finally{ card && card.classList.remove("busy"); }
+  }
+  $("#cvFile").addEventListener("change", e => { importarCV(e.target.files[0]); e.target.value = ""; });
+  const CVAPP_URL = "https://luchorcompartidos.github.io/lucho/CVAPP.html";
+  function dlgCvapp(){
+    dlg(`<h3>Desde CVAPP</h3>
+      <p>CVAPP no deja tus datos guardados en el navegador, así que se pasan con su archivo de exportación:</p>
+      <ol class="pasos"><li>En CVAPP tocá <b>EXPORTAR Datos Personales</b> (se descarga un <code>.json</code>).</li><li>Acá tocá <b>Elegir el JSON de CVAPP</b>.</li></ol>
+      <p class="sm mut">Se arma el texto con títulos estándar y se respetan las secciones que tengas ocultas. El CUIL y la fecha de nacimiento no se usan.</p>
+      <div class="acts"><a class="btn" href="${CVAPP_URL}" target="_blank" rel="noopener">Abrir CVAPP ↗</a><button class="btn" data-x type="button">Cancelar</button><button class="btn pri" id="cvappElegir" type="button">Elegir el JSON de CVAPP</button></div>`);
+    $("#cvappElegir").onclick = () => { $("#dlg").close(); $("#cvFile").click(); };
+  }
+  function dlgGoogle(){
+    dlg(`<h3>Documento de Google</h3>
+      <label>Link del documento<input id="gUrl" placeholder="https://docs.google.com/document/d/…" inputmode="url"></label>
+      <p class="sm mut">Para leerlo directo, el documento tiene que estar compartido como “Cualquier persona con el enlace” o publicado en la web. Si preferís no hacerlo público, descargalo como .docx y usá “Importar archivo”.</p>
+      <div id="gErr"></div>
+      <div class="acts"><button class="btn" data-x type="button">Cancelar</button><button class="btn pri" id="gLeer" type="button">Leer documento</button></div>`);
+    const go = async () => {
+      const b = $("#gLeer"); b.disabled = true; b.textContent = "Leyendo…";
+      try{ const r = await window.CVIMP.leerGoogle($("#gUrl").value); $("#dlg").close(); aplicarCV(r); }
+      catch(e){
+        $("#gErr").innerHTML = `<p class="warn"><b>${esc(e.message)}</b></p>${e.google ? `<p class="sm">Alternativas:</p><ol class="pasos sm">
+          <li>En Google Docs: <b>Archivo → Descargar → Microsoft Word (.docx)</b> y después “Importar archivo” (recomendado: no hace falta hacerlo público).</li>
+          <li>O <b>Archivo → Compartir → Publicar en la Web</b>, copiá ese link y probá de nuevo.</li>
+          <li>O copiá todo el texto del documento y pegalo en el cuadro del CV.</li></ol>` : ""}`;
+        b.disabled = false; b.textContent = "Leer documento";
+      }
+    };
+    $("#gLeer").onclick = go; $("#gUrl").onkeydown = e => { if(e.key === "Enter") go(); };
+    setTimeout(() => $("#gUrl").focus(), 50);
+  }
+  const fileChecks = () => S.cvSrc ? (S.cvSrc.checks || []) : [];
   function comparar(guardar){
     if(!S.aviso.texto.trim()){ toast("Primero pegá un aviso en la pestaña Aviso."); return; }
     if(!S.cv.trim()){ toast("Pegá el texto de tu CV."); return; }
@@ -760,10 +1064,13 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
   function htmlMatch(M){
     const nv = nivel(M.score);
     const ico = {exacto: "✅", sinonimo: "🟡", falta: "❌"};
-    const rows = M.skills.map(s => `<tr><td>${esc(A.PRI[s.pri].n.replace(/s$/, "").replace("Generale", "General").replace("En beneficio", "Beneficio"))}</td>
+    const CORTO = {exc: "Excluyente", req: "Requisito", resp: "Tarea", des: "Deseable", otro: "General", ben: "Beneficio", emp: "Empresa"};
+    const rows = M.skills.map(s => `<tr><td>${CORTO[s.pri]}</td>
       <td>${esc(s.l)}<small>en el aviso: “${esc(s.mainTxt)}”</small></td>
       <td class="st">${ico[s.st]} ${s.st === "exacto" ? "Exacto" : s.st === "sinonimo" ? "Sinónimo" : "Falta"}${s.st === "sinonimo" ? `<small>tu CV: “${esc(s.cvAl)}”</small>` : ""}</td></tr>`).join("");
     const li = x => `<li><span>${x.ok === true ? "✅" : x.ok === false ? "❌" : "❔"}</span><span>${esc(x.t)}</span></li>`;
+    const fc = fileChecks(), recs = M.recs.slice(), malos = fc.filter(x => x.ok === false);
+    if(malos.length) recs.splice(recs.length - 1, 0, `Archivo: ${malos.map(x => x.t.split(":")[0].toLowerCase()).join("; ")}. Para postular, conviene un PDF con texto o un .docx de una sola columna, sin tablas ni cuadros de texto.`);
     return `${cabPrint("Match aviso + CV")}
     <div class="card"><div class="score">
       <div class="big s-${nv}">${M.score}%</div>
@@ -775,9 +1082,9 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
     ${M.skills.length ? `<div class="card"><h2>Términos del aviso en tu CV</h2><table class="t"><thead><tr><th>Prioridad</th><th>Término</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}
     ${M.kws.length ? `<div class="card"><h2>Términos repetidos del aviso</h2><div class="chips">${M.kws.map(k => `<span class="chip ${k.ok ? "ok" : "no"}">${k.ok ? "✓" : "✗"} ${esc(k.t)}</span>`).join("")}</div></div>` : ""}
     ${M.req.length ? `<div class="card"><h2>Requisitos del puesto</h2><ul class="chk">${M.req.map(li).join("")}</ul></div>` : ""}
-    <div class="card"><h2>Formato apto ATS</h2><ul class="chk">${M.fmt.map(li).join("")}</ul>
-      <p class="sm mut" style="margin:8px 0 0">Se revisa el texto pegado. Tablas, columnas e imágenes del archivo original se van a poder revisar cuando se importe el PDF o el .docx.</p></div>
-    <div class="card"><h2>Sugerencias</h2><ul class="recs">${M.recs.map(r => `<li>${esc(r)}</li>`).join("")}</ul>
+    <div class="card"><h2>Formato apto ATS</h2>${fc.length ? `<h3>Archivo: ${esc(S.cvSrc.nombre)} (${esc(S.cvSrc.tipo)})</h3><ul class="chk">${fc.map(li).join("")}</ul><h3>Contenido</h3>` : ""}<ul class="chk">${M.fmt.map(li).join("")}</ul>
+      ${fc.length ? "" : '<p class="sm mut" style="margin:8px 0 0">Se revisa el texto pegado. Importá el PDF o el .docx para revisar también tablas, columnas, cuadros de texto e imágenes del archivo.</p>'}</div>
+    <div class="card"><h2>Sugerencias</h2><ul class="recs">${recs.map(r => `<li>${esc(r)}</li>`).join("")}</ul>
       <div class="acts noprint"><button class="btn" data-act="csvMatch" type="button">⬇ CSV</button><button class="btn" data-act="print" type="button">🖨 Imprimir / PDF</button></div></div>`;
   }
 
@@ -878,7 +1185,7 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
     MATCH.skills.forEach(s => rows.push([A.PRI[s.pri].n, s.l, s.mainTxt, s.st, s.cvAl || ""]));
     MATCH.kws.forEach(k => rows.push(["Repetido", k.t, k.t, k.ok ? "exacto" : "falta", ""]));
     rows.push([], ["Requisito", "Resultado"]); MATCH.req.forEach(x => rows.push([x.t, x.ok === true ? "OK" : x.ok === false ? "No" : "Revisar"]));
-    rows.push([], ["Formato ATS", "Resultado"]); MATCH.fmt.forEach(x => rows.push([x.t, x.ok ? "OK" : "No"]));
+    rows.push([], ["Formato ATS", "Resultado"]); fileChecks().concat(MATCH.fmt).forEach(x => rows.push([x.t, x.ok === true ? "OK" : x.ok === false ? "No" : "Revisar"]));
     bajar(`match-${slug(S.aviso.puesto)}-${hoy()}.csv`, csv(rows), "text/csv;charset=utf-8");
   }
   function csvHist(){
@@ -889,14 +1196,16 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
   }
   function backup(){
     const data = {app: "jobpost", tipo: "backup", formato: FORMATO, version: appV(), motor: A.MOTOR, exportado: new Date().toISOString(),
-      data: {aviso: S.aviso, cv: S.cv, history: S.history, custom: S.custom}};
+      data: {aviso: S.aviso, cv: S.cv, cvSrc: S.cvSrc, history: S.history, custom: S.custom}};
     bajar(`jobpost-backup-${hoy()}.json`, JSON.stringify(data, null, 2), "application/json");
     toast("Backup descargado. Ojo: incluye tu CV.");
   }
   // Validación del JSON importado: solo datos, con tipos y largos controlados
   const str = (v, max) => typeof v === "string" ? v.slice(0, max) : "";
   function limpiar(d){
-    const out = {history: [], custom: [], cv: str(d.cv, 60000), aviso: null};
+    const out = {history: [], custom: [], cv: str(d.cv, 60000), aviso: null, cvSrc: null};
+    if(d.cvSrc && typeof d.cvSrc === "object") out.cvSrc = {tipo: str(d.cvSrc.tipo, 40), nombre: str(d.cvSrc.nombre, 200), paginas: Math.min(+d.cvSrc.paginas || 0, 999), at: +d.cvSrc.at || Date.now(), editado: d.cvSrc.editado === true,
+      checks: (Array.isArray(d.cvSrc.checks) ? d.cvSrc.checks : []).slice(0, 20).map(x => ({ok: x && typeof x.ok === "boolean" ? x.ok : null, t: str(x && x.t, 300)})).filter(x => x.t)};
     if(d.aviso && typeof d.aviso === "object") out.aviso = {puesto: str(d.aviso.puesto, 200), empresa: str(d.aviso.empresa, 200), texto: str(d.aviso.texto, 60000)};
     (Array.isArray(d.history) ? d.history : []).slice(0, 300).forEach(e => {
       if(!e || typeof e !== "object" || typeof e.texto !== "string") return;
@@ -929,11 +1238,11 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
         d.history.forEach(e => { const ex = S.history.find(x => x.h === e.h || x.id === e.id); if(!ex) S.history.push(e); else if((e.upd || 0) > (ex.upd || 0)) Object.assign(ex, e); });
         S.history.sort((a, b) => (b.upd || b.at) - (a.upd || a.at));
         d.custom.forEach(c => { const ex = S.custom.find(x => A.norm(x.l).trim() === A.norm(c.l).trim()); if(ex) ex.al = [...new Set([...(ex.al || []), ...c.al])]; else S.custom.push(c); });
-        if(!S.cv.trim() && d.cv) S.cv = d.cv;
+        if(!S.cv.trim() && d.cv){ S.cv = d.cv; S.cvSrc = d.cvSrc; }
         if(!S.aviso.texto.trim() && d.aviso) S.aviso = d.aviso;
         fin("Backup combinado.");
       };
-      $("#impRep").onclick = () => { S.history = d.history; S.custom = d.custom; S.cv = d.cv; S.aviso = d.aviso || {puesto: "", empresa: "", texto: ""}; fin("Datos reemplazados por el backup."); };
+      $("#impRep").onclick = () => { S.history = d.history; S.custom = d.custom; S.cv = d.cv; S.cvSrc = d.cvSrc; S.aviso = d.aviso || {puesto: "", empresa: "", texto: ""}; fin("Datos reemplazados por el backup."); };
       function fin(m){ rebuild(); save(); $("#dlg").close(); render(); toast(m); }
     };
     rd.readAsText(file);
@@ -994,7 +1303,8 @@ Ofrecemos:
     limpiar: () => { S.aviso = {puesto: "", empresa: "", texto: ""}; JOB = null; save(); vAviso(); },
     irAviso: () => ir("aviso"), irMatch: () => ir("match"),
     comparar: () => comparar(true),
-    borrarCV: () => confirmar("Borrar CV", "Se borra el texto del CV guardado en este navegador.", "Borrar", () => { S.cv = ""; MATCH = null; save(); vMatch(); }),
+    borrarCV: () => confirmar("Borrar CV", "Se borra el texto del CV guardado en este navegador.", "Borrar", () => { S.cv = ""; S.cvSrc = null; MATCH = null; save(); vMatch(); }),
+    cvArchivo: () => $("#cvFile").click(), cvCvapp: () => dlgCvapp(), cvGoogle: () => dlgGoogle(),
     csvJob, csvMatch, csvHist, backup,
     print: () => { const d = $("#dlg"); if(d.open) d.close(); setTimeout(() => window.print(), 50); },
     addkw: b => { if(addCustom(b.dataset.t, "", "P")){ toast(`“${b.dataset.t}” sumado al diccionario.`); analizar(false); } },
@@ -1006,6 +1316,7 @@ Ofrecemos:
     importar: () => { $("#dlg").close(); $("#fileIn").click(); },
     privacidad: () => dlg(`<h3>Privacidad y datos</h3>
       <p>Todo se procesa y se guarda <b>solo en este navegador</b>: avisos, historial, tu CV y tus términos propios. Nada se sube al repositorio ni a otro servidor.</p>
+      <p class="sm mut">Los archivos que importás (PDF, .docx, JSON) se leen en tu dispositivo y solo se guarda el texto extraído. Para leer PDF se descarga una vez la librería pdf.js desde un CDN público (no recibe tu archivo). Con “Documento de Google” la app pide el documento directamente a Google.</p>
       <p class="sm mut">Si borrás los datos del navegador, se pierden: usá “Exportar backup” para tener una copia. El backup incluye tu CV, así que guardalo en un lugar privado.</p>
       <div class="acts"><button class="btn pri" data-x type="button">Entendido</button></div>`),
     borrarTodo: () => confirmar("Borrar todos los datos", "Se borran el aviso, el CV, el historial y los términos propios de este navegador. No se puede deshacer.", "Borrar todo", () => { S = nuevo(); JOB = MATCH = null; rebuild(); save(); render(); toast("Datos borrados."); })
