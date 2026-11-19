@@ -56,6 +56,28 @@ Se elige Gemini o Claude y se pega la clave. Es más rápido, pero la clave qued
 
 > **Privacidad:** la IA recibe el aviso y, en el match, también tu CV. Según las condiciones de Google, en el plan gratuito de Gemini los datos pueden usarse para mejorar sus productos. Revisá las condiciones vigentes.
 
+## Postulaciones, tendencias y carta (v0.1.0)
+
+- **📋 Postulaciones:** cada aviso analizado tiene su **seguimiento**:
+  - **Estados:** para postular, postulado, entrevista, prueba técnica, oferta, rechazado, descartado por mí o sin respuesta. Queda registrado cuándo cambió cada estado.
+  - **Datos de la postulación:** fecha, canal, contacto, link del aviso y notas.
+  - **Próximo paso con fecha:** los que vencen en los próximos 7 días aparecen arriba, y los vencidos en rojo.
+  - **Filtros** por estado.
+  - **Exportación a CSV** con todos los datos.
+- **📈 Tendencias:** mira todos los avisos analizados, con filtro por período y solo los avisos a los que te postulaste. Muestra:
+  - indicadores: cantidad de avisos, match promedio, porcentaje que pide inglés y años pedidos;
+  - los términos más pedidos, marcando los que **faltan en tu CV**;
+  - **"Para reforzar en tu CV"**;
+  - la distribución por categoría, seniority y modalidad;
+  - una vista en tabla y la exportación a CSV.
+- **Resaltado:** podés ver el aviso con sus términos coloreados por prioridad, y tu CV con lo que coincide con el aviso (exacto, sinónimo o término repetido).
+- **✉️ Carta de presentación:** se puede elegir tono, largo e idioma. Hay dos formas de generarla:
+  - **Motor local:** sin conexión, usa solo los términos que aparecen en tu CV.
+  - **IA:** con la consigna de no inventar nada.
+
+  El borrador se puede editar, copiar o descargar, y queda guardado con el aviso.
+- La app figura en el mapa de la caja de apps (`luchorcompartidos/home` → `mapa-apps.md`).
+
 ## Tema
 
 Por defecto sigue el tema del sistema (claro u oscuro). Se puede fijar en **⋯ → Tema**. Al imprimir siempre sale en claro.
@@ -64,11 +86,14 @@ Por defecto sigue el tema del sistema (claro u oscuro). Se puede fijar en **⋯ 
 
 1. **Fase 2 (hecha en v0.0.2):** importar el CV. Pendiente a futuro: un botón "Enviar a Job Post" en CVAPP y OCR para PDF escaneados.
 2. **Fase 3 (hecha en v0.0.3):** motor con IA, reglas aprobadas con versión e importación y exportación de reglas, además del tema de sistema.
-3. **Fase 4:** sumar la app a Mi Panel y a la caja de apps, más extras:
-   - seguimiento de postulaciones;
-   - resaltar en el CV las palabras clave del aviso;
-   - tendencias de skills en los avisos analizados;
-   - borrador de carta de presentación.
+3. **Fase 4 (hecha en v0.1.0):** postulaciones, tendencias, resaltado, carta y alta en la caja de apps.
+
+**Ideas a futuro:**
+- botón "Enviar a Job Post" en CVAPP;
+- OCR para PDF escaneados;
+- avisos de próximos pasos con la app Recordatorios;
+- sincronización de las postulaciones con Google Sheets;
+- guardar el aviso desde el navegador con un bookmarklet.
 
 ## Formato del backup JSON
 

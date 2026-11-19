@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="app-version" content="v0.0.3">
+<meta name="app-version" content="v0.1.0">
 <meta name="theme-color" content="#0f766e">
 <meta name="color-scheme" content="light dark">
 <script>try{var t=(JSON.parse(localStorage.getItem("jobpost_app_v1")||"{}").tema)||"sistema";document.documentElement.dataset.tema=(t==="oscuro"||(t==="sistema"&&matchMedia("(prefers-color-scheme: dark)").matches))?"dark":"light";}catch(e){}</script>
@@ -99,6 +99,34 @@
   #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#1c1f26;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:9999;max-width:90vw;text-align:center}
   #toast.on{opacity:1;transform:translateX(-50%)}
   .printonly{display:none}
+  /* Resaltado */
+  .hltx{white-space:pre-wrap;font-size:14px;line-height:1.6;max-height:520px;overflow:auto;border:1px solid var(--bd);border-radius:10px;padding:10px;margin-top:8px;background:var(--inp)}
+  mark{border-radius:4px;padding:0 2px;color:inherit}
+  .hl-ok{background:#bbf7d0}.hl-syn{background:#fde68a}.hl-kw{background:#bfdbfe}
+  .hl-exc{background:#fecaca}.hl-req{background:#fed7aa}.hl-resp{background:#bae6fd}.hl-des{background:#ddd6fe}.hl-otro{background:#e2e8f0}
+  html[data-tema=dark] .hl-ok{background:#166534aa}html[data-tema=dark] .hl-syn{background:#854d0eaa}html[data-tema=dark] .hl-kw{background:#1e3a8aaa}
+  html[data-tema=dark] .hl-exc{background:#7f1d1daa}html[data-tema=dark] .hl-req{background:#7c2d12aa}html[data-tema=dark] .hl-resp{background:#075985aa}html[data-tema=dark] .hl-des{background:#4c1d95aa}html[data-tema=dark] .hl-otro{background:#334155aa}
+  details>summary{cursor:pointer;font-weight:600}
+  /* Postulaciones */
+  .est{display:inline-block;font-size:12px;font-weight:600;padding:1px 8px;border-radius:999px;border:1px solid var(--bd2);color:var(--tx);background:var(--card)}
+  .est.e-postulado{border-color:var(--ac);color:var(--ac)} .est.e-entrevista,.est.e-prueba{border-color:#d97706;color:var(--mid)}
+  .est.e-oferta{background:var(--okb);border-color:var(--ok);color:var(--ok)} .est.e-rechazado{color:var(--bad);border-color:var(--dangerb)} .est.e-descartado,.est.e-sinrta{color:var(--mut)}
+  .filt{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+  .filt button{border:1px solid var(--bd2);background:var(--card);color:var(--tx);border-radius:999px;padding:4px 10px;font:13px system-ui,sans-serif;cursor:pointer}
+  .filt button.on{background:var(--ac);border-color:var(--ac);color:var(--onac)}
+  .vence{color:var(--bad);font-weight:600} .pronto{color:var(--mid);font-weight:600}
+  .tl{list-style:none;margin:6px 0 0;padding:0;font-size:13px;color:var(--mut)} .tl li{padding:2px 0}
+  /* Tendencias */
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+  .tile{border:1px solid var(--bd);border-radius:12px;padding:10px;background:var(--card)} .tile b{display:block;font-size:24px;line-height:1.15;font-variant-numeric:tabular-nums} .tile span{font-size:12px;color:var(--mut)}
+  .bars{display:flex;flex-direction:column;gap:7px}
+  .bar{display:grid;grid-template-columns:minmax(0,38%) 1fr 64px;gap:8px;align-items:center;font-size:13px}
+  .bar .bl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar .bt{height:8px;border-radius:4px;background:var(--meter);overflow:hidden} .bar .bt i{display:block;height:100%;background:var(--ac);border-radius:0 4px 4px 0}
+  .bar .bv{text-align:right;font-variant-numeric:tabular-nums;color:var(--tx)}
+  .bar:hover .bt i{filter:brightness(1.15)}
+  .falta{font-size:11px;color:var(--bad);font-weight:600;margin-left:4px}
+  @media (max-width:560px){ .tiles{grid-template-columns:repeat(2,1fr)} }
   /* IA */
   .ia{border-color:#99d5cc} html[data-tema=dark] .ia{border-color:#1f5a52}
   .ia h2 small{font-weight:400;color:var(--mut);font-size:12px}
@@ -125,7 +153,7 @@
   .busy{opacity:.6;pointer-events:none}
   ol.pasos{margin:6px 0 0;padding-left:20px} ol.pasos li{margin:4px 0}
   @media (max-width:560px){ .g2{grid-template-columns:1fr} .g3{grid-template-columns:1fr 1fr} .kv{grid-template-columns:118px 1fr} .score .big{font-size:38px} }
-  @media (max-width:420px){ nav button{font-size:12px} }
+  @media (max-width:440px){ nav button{font-size:11px;letter-spacing:-.2px} }
   @media print{
     header,nav,.noprint,#toast{display:none!important}
     html,body{background:#fff}
@@ -655,7 +683,21 @@ Energía / Oil & Gas|I|energia,petroleo;oil & gas,oil and gas,energy
     return r;
   }
 
-  root.ATS = {norm, reTerm, buildDict, analyzeJob, matchCV, classify, CATS, PRI, BASE_COUNT: BASE.length, BASE, MOTOR: "reglas-1"};
+  // Resalta en un texto los términos indicados: specs = [{re, cls, tip}]. Devuelve HTML seguro o null.
+  function resaltar(text, specs){
+    const e = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    const raw = String(text || "").normalize("NFC"), n = norm(raw);
+    if(n.length !== raw.length) return null;
+    const marks = [];
+    specs.forEach(sp => { const re = new RegExp(sp.re.source, "g"); let m; while((m = re.exec(n))){ if(!m[0].length){ re.lastIndex++; continue; } marks.push([m.index, m.index + m[0].length, sp.cls, sp.tip]); } });
+    marks.sort((a, b) => a[0] - b[0] || (b[1] - b[0]) - (a[1] - a[0]));
+    let out = "", pos = 0;
+    marks.forEach(([a, b, cls, tip]) => { if(a < pos) return; out += e(raw.slice(pos, a)) + `<mark class="${cls}" title="${e(tip)}">${e(raw.slice(a, b))}</mark>`; pos = b; });
+    return out + e(raw.slice(pos));
+  }
+  const cvTiene = (cvNorm, entry) => !!entry && entry.re.some(a => { a.re.lastIndex = 0; return a.re.test(cvNorm); });
+
+  root.ATS = {norm, reTerm, buildDict, analyzeJob, matchCV, classify, resaltar, cvTiene, CATS, PRI, BASE_COUNT: BASE.length, BASE, MOTOR: "reglas-1"};
 })(typeof window !== "undefined" ? window : globalThis);
 </script>
 
@@ -1047,7 +1089,25 @@ ${String(cv).slice(0, 20000)}
     return out.slice(0, 40);
   }
 
-  root.IA = {cfg, guardar, lista, quien, modeloDef, MOD, llamar, probar, analizarAviso, analizarMatch, normAviso, normMatch, sugerencias, json};
+  async function carta(aviso, cv, o){
+    const p = `Escribí un borrador de carta de presentación (o email de postulación) para este aviso, basado SOLO en lo que muestra el CV.
+Tono: ${o.tono === "cercano" ? "cercano y cálido, profesional" : "formal y profesional"}. Largo: ${o.largo === "breve" ? "breve, entre 90 y 130 palabras" : "medio, entre 180 y 250 palabras"}. Idioma: ${o.idioma === "en" ? "inglés" : "español rioplatense (usá “ustedes”, sin voseo exagerado)"}.
+Destacá las 3 o 4 coincidencias más fuertes con el aviso, usando los términos exactos del aviso cuando el CV los respalde. No inventes logros, cifras, años ni herramientas. Firmá con el nombre del CV si aparece.
+Devolvé este JSON: {"asunto":"asunto del email","carta":"texto completo con saltos de línea"}
+${o.puesto ? "PUESTO: " + o.puesto + "\n" : ""}${o.empresa ? "EMPRESA: " + o.empresa + "\n" : ""}AVISO:
+"""
+${String(aviso).slice(0, 10000)}
+"""
+CV:
+"""
+${String(cv).slice(0, 15000)}
+"""`;
+    const r = await llamar(SYS, p, 1800);
+    const j = json(r.texto);
+    return {asunto: S(j.asunto, 200), texto: S(j.carta, 4000), modelo: r.modelo};
+  }
+
+  root.IA = {cfg, guardar, lista, quien, modeloDef, MOD, llamar, probar, analizarAviso, analizarMatch, carta, normAviso, normMatch, sugerencias, json};
 })(window);
 </script>
 
@@ -1065,7 +1125,7 @@ ${String(cv).slice(0, 20000)}
   const fmtD = t => new Date(t).toLocaleString("es-AR", {day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit"});
   const hash = s => { let h = 2166136261; for(let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); };
   const appV = () => (document.querySelector('meta[name="app-version"]') || {}).content || "";
-  const TABS = [["aviso","📄","Aviso"], ["match","🎯","Match CV"], ["hist","🕘","Historial"], ["dic","📚","Diccionario"]];
+  const TABS = [["aviso","📄","Aviso"], ["match","🎯","Match CV"], ["hist","📋","Postulaciones"], ["tend","📈","Tendencias"], ["dic","📚","Diccionario"]];
   const nivel = s => s >= 75 ? "ok" : s >= 50 ? "mid" : "bad";
   const nivelTxt = s => s >= 75 ? "Alto" : s >= 50 ? "Medio" : "Bajo";
 
@@ -1102,7 +1162,7 @@ ${String(cv).slice(0, 20000)}
   // ---------- Render ----------
   function render(){
     $("#tabs").innerHTML = TABS.map(([k, i, t]) => `<button type="button" data-tab="${k}" class="${S.tab === k ? "on" : ""}"><span>${i}</span>${t}</button>`).join("");
-    ({aviso: vAviso, match: vMatch, hist: vHist, dic: vDic})[S.tab]();
+    (({aviso: vAviso, match: vMatch, hist: vHist, tend: vTend, dic: vDic})[S.tab] || vAviso)();
   }
   $("#tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if(!b) return; ir(b.dataset.tab); });
   function ir(tab){ S.tab = tab; save(); render(); window.scrollTo(0, 0); }
@@ -1170,6 +1230,9 @@ ${String(cv).slice(0, 20000)}
     <div class="card"><h2>Palabras clave del aviso</h2>
       <p class="sm mut">${J.skills.length} términos detectados · ${exc} excluyentes o requisitos. Tocá un término para ver cuántas veces aparece.</p>
       ${grupos || '<p class="mut">No se detectaron términos del diccionario.</p>'}
+      ${J.skills.length ? `<details class="mt noprint"><summary>Ver el aviso resaltado</summary>
+        <div class="leg"><span class="chip"><mark class="hl-exc">Excluyente</mark></span><span class="chip"><mark class="hl-req">Requisito</mark></span><span class="chip"><mark class="hl-resp">Tarea</mark></span><span class="chip"><mark class="hl-des">Deseable</mark></span><span class="chip"><mark class="hl-otro">General</mark></span></div>
+        <div class="hltx">${avisoResaltado(J) ?? esc(S.aviso.texto)}</div></details>` : ""}
       ${J.skills.length ? `<div class="leg">${Object.entries(cats).sort((a, b) => b[1] - a[1]).map(([c, n]) => `<span class="chip c-${c}">${esc(A.CATS[c])} ${n}</span>`).join("")}</div>` : ""}
     </div>
     ${J.keywords.length ? `<div class="card"><h2>Términos repetidos no catalogados</h2>
@@ -1179,6 +1242,7 @@ ${String(cv).slice(0, 20000)}
     <div class="card"><h2>Recomendaciones para tu CV</h2><ul class="recs">${J.recs.map(r => `<li>${esc(r)}</li>`).join("")}</ul>
       <div class="acts noprint">
         <button class="btn pri" data-act="irMatch" type="button">🎯 Comparar con mi CV</button>
+        <button class="btn" data-act="seguir" type="button">📋 Seguimiento</button>
         <button class="btn" data-act="csvJob" type="button">⬇ CSV</button>
         <button class="btn" data-act="print" type="button">🖨 Imprimir / PDF</button>
       </div></div>
@@ -1289,8 +1353,168 @@ ${String(cv).slice(0, 20000)}
       ${fc.length ? "" : '<p class="sm mut" style="margin:8px 0 0">Se revisa el texto pegado. Importá el PDF o el .docx para revisar también tablas, columnas, cuadros de texto e imágenes del archivo.</p>'}</div>
     <div class="card"><h2>Sugerencias</h2><ul class="recs">${recs.map(r => `<li>${esc(r)}</li>`).join("")}</ul>
       <div class="acts noprint"><button class="btn" data-act="csvMatch" type="button">⬇ CSV</button><button class="btn" data-act="print" type="button">🖨 Imprimir / PDF</button></div></div>
+    ${M.skills.length ? `<div class="card noprint"><details><summary>📝 Tu CV resaltado con los términos del aviso</summary>
+      <div class="leg"><span class="chip"><mark class="hl-ok">Igual que en el aviso</mark></span><span class="chip"><mark class="hl-syn">Sinónimo</mark></span><span class="chip"><mark class="hl-kw">Término repetido del aviso</mark></span></div>
+      <div class="hltx">${cvResaltado(M) ?? esc(S.cv)}</div>
+      ${M.cnt.fal ? `<p class="sm mut" style="margin:8px 0 0">No aparecen: ${esc(M.skills.filter(x => x.st === "falta").map(x => x.mainTxt).join(", "))}.</p>` : ""}</details></div>` : ""}
+    <div id="carta">${htmlCarta()}</div>
     <div id="iaMatch">${htmlIAMatch(M)}</div>`;
   }
+
+  // ----- Resaltado -----
+  const entrada = id => DICT.find(e => e.id === id);
+  const PRI_TXT = {exc: "Excluyente", req: "Requisito", resp: "Tarea", des: "Deseable", otro: "General"};
+  function avisoResaltado(J){
+    const specs = [];
+    J.skills.forEach(s => { const e = entrada(s.id); if(e) Object.keys(s.al).forEach(t => { const a = e.re.find(x => x.t === t); if(a) specs.push({re: a.re, cls: "hl-" + (PRI_TXT[s.pri] ? s.pri : "otro"), tip: `${s.l} · ${PRI_TXT[s.pri] || "General"}`}); }); });
+    return A.resaltar(S.aviso.texto, specs);
+  }
+  function cvResaltado(M){
+    const specs = [];
+    M.skills.forEach(s => { const e = entrada(s.id); if(e) e.re.forEach(a => specs.push({re: a.re, cls: Object.keys(s.al).includes(a.t) ? "hl-ok" : "hl-syn", tip: `${s.l} · ${PRI_TXT[s.pri] || "General"} · ${Object.keys(s.al).includes(a.t) ? "igual que en el aviso" : "sinónimo: el aviso dice “" + s.mainTxt + "”"}`})); });
+    M.kws.filter(k => k.ok).forEach(k => specs.push({re: A.reTerm(A.norm(k.t)), cls: "hl-kw", tip: "Término que el aviso repite"}));
+    return A.resaltar(S.cv, specs);
+  }
+
+  // ----- Carta de presentación -----
+  let cartaOcupada = false;
+  const cartaOpts = () => Object.assign({tono: "formal", largo: "media", idioma: "auto"}, S.cartaOpts || {});
+  function htmlCarta(){
+    const e = histActual(), c = e && e.carta, o = cartaOpts();
+    const sel = (id, v, ops) => `<select id="${id}">${ops.map(([k, l]) => `<option value="${k}"${v === k ? " selected" : ""}>${l}</option>`).join("")}</select>`;
+    return `<div class="card noprint"><h2>✉️ Carta de presentación</h2>
+      <p class="sm mut">Borrador para el email o la carta de postulación. El motor local usa solo términos que aparecen en tu CV. La IA redacta mejor, pero envía el aviso y tu CV a ${esc(IA.quien())}.</p>
+      <div class="g3" style="grid-template-columns:1fr 1fr 1fr"><label>Tono${sel("cTono", o.tono, [["formal", "Formal"], ["cercano", "Cercano"]])}</label>
+        <label>Largo${sel("cLargo", o.largo, [["breve", "Breve"], ["media", "Media"]])}</label>
+        <label>Idioma${sel("cIdioma", o.idioma, [["auto", "Como el aviso"], ["es", "Español"], ["en", "Inglés"]])}</label></div>
+      <div class="acts"><button class="btn" data-act="cartaLocal" type="button">📝 Generar (motor local)</button>${IA.lista() ? `<button class="btn pri" data-act="cartaIA" type="button"${cartaOcupada ? " disabled" : ""}>${cartaOcupada ? '<span class="spin"></span> Redactando…' : "🤖 Generar con IA"}</button>` : ""}</div>
+      ${c ? `<label class="mt">Borrador ${c.origen === "ia" ? "de la IA" : "del motor local"} · ${fmtD(c.at)} (podés editarlo)<textarea id="cartaTx" rows="14">${esc(c.texto)}</textarea></label>
+        <div class="acts"><button class="btn" data-act="cartaCopiar" type="button">📋 Copiar</button><button class="btn" data-act="cartaTxt" type="button">⬇ .txt</button></div>
+        <p class="sm mut">Revisala antes de enviarla: completá lo que falte y sacá lo que no sea exacto.</p>` : ""}
+    </div>`;
+  }
+  function leerOpts(){ const o = {tono: $("#cTono").value, largo: $("#cLargo").value, idioma: $("#cIdioma").value}; S.cartaOpts = o; save(); return o; }
+  const idiomaCarta = o => o.idioma !== "auto" ? o.idioma : (JOB && JOB.lang.cod === "en" ? "en" : "es");
+  const listaY = (arr, en) => arr.length <= 1 ? (arr[0] || "") : arr.slice(0, -1).join(", ") + (en ? " and " : " y ") + arr[arr.length - 1];
+  function cartaLocal(o){
+    const M = MATCH, en = idiomaCarta(o) === "en";
+    const puesto = S.aviso.puesto.trim() || (en ? "the position" : "la posición"), emp = S.aviso.empresa.trim();
+    const l1 = (S.cv.split("\n").map(x => x.trim()).find(Boolean) || "");
+    const nombre = /^[\p{L} .'-]{3,60}$/u.test(l1) && l1.split(/\s+/).length <= 5 ? l1 : (en ? "[Your name]" : "[Tu nombre]");
+    const ok = M.skills.filter(x => x.st !== "falta");
+    // En español se usa el nombre del término (“Análisis funcional”); en inglés, el término tal como lo escribe el aviso
+    const nom = x => en ? x.mainTxt : x.l;
+    const fuertes = ok.filter(x => x.pri === "exc" || x.pri === "req").map(nom).slice(0, 4);
+    const tareas = ok.filter(x => x.pri === "resp").map(nom).slice(0, 4);
+    const deseables = ok.filter(x => x.pri === "des").map(nom).slice(0, 3);
+    const anios = Math.max(M.yrs.fechas, M.yrs.declarados);
+    const cerca = o.tono === "cercano", largo = o.largo === "media";
+    let t;
+    if(en){
+      t = [`Subject: Application – ${puesto}`, "", cerca ? `Hi ${emp ? emp + " team" : "there"},` : `Dear Hiring Team${emp ? " at " + emp : ""},`, "",
+        `I am writing to apply for the ${puesto} position${emp ? " at " + emp : ""}.${anios ? ` I bring ${anios} years of professional experience` : " I bring relevant professional experience"}${fuertes.length ? `, including hands-on work with ${listaY(fuertes, true)}` : ""}.`];
+      if(largo && tareas.length) t.push("", `In my recent roles I have worked with ${listaY(tareas, true)}, in line with the responsibilities described in your posting.`);
+      if(deseables.length) t.push("", `I also have experience with ${listaY(deseables, true)}.`);
+      t.push("", largo ? "I would welcome the opportunity to discuss how my background can contribute to your team. Thank you for your time and consideration." : "I would be glad to talk further about how I can contribute.", "", cerca ? "Best regards," : "Sincerely,", nombre);
+    } else {
+      t = [`Asunto: Postulación – ${puesto}`, "", cerca ? `Hola${emp ? ", equipo de " + emp : ""}:` : `Estimado equipo de selección${emp ? " de " + emp : ""}:`, "",
+        `Les escribo para postularme a la búsqueda de ${puesto}.${anios ? ` Cuento con ${anios} años de experiencia profesional` : " Cuento con experiencia profesional en el área"}${fuertes.length ? `, con experiencia concreta en ${listaY(fuertes)}` : ""}.`];
+      if(largo && tareas.length) t.push("", `En mis últimos roles trabajé con ${listaY(tareas)}, en línea con las tareas que describe la búsqueda.`);
+      if(deseables.length) t.push("", `Además, tengo experiencia en ${listaY(deseables)}.`);
+      t.push("", largo ? "Me encantaría conversar sobre cómo puedo aportar al equipo. Les agradezco el tiempo y quedo a disposición para ampliar cualquier información." : "Quedo a disposición para conversar cuando les resulte conveniente.", "", cerca ? "¡Gracias y saludos!" : "Saludos cordiales,", nombre);
+    }
+    return t.join("\n");
+  }
+  function guardarCarta(texto, origen){ const e = histActual(); if(e){ e.carta = {texto, origen, at: Date.now()}; save(); } const b = $("#carta"); if(b) b.innerHTML = htmlCarta(); }
+  function generarCarta(ia){
+    if(!S.aviso.texto.trim() || !S.cv.trim()){ toast("Necesitás el aviso y tu CV."); return; }
+    const o = leerOpts();
+    if(!MATCH) comparar(true); else guardarHist();
+    if(!ia){ guardarCarta(cartaLocal(o), "local"); toast("Borrador generado."); return; }
+    enviarCV(async () => {
+      cartaOcupada = true; $("#carta").innerHTML = htmlCarta();
+      try{ const r = await IA.carta(S.aviso.texto, S.cv, {...o, idioma: idiomaCarta(o), puesto: S.aviso.puesto, empresa: S.aviso.empresa}); cartaOcupada = false; guardarCarta((r.asunto ? (idiomaCarta(o) === "en" ? "Subject: " : "Asunto: ") + r.asunto + "\n\n" : "") + r.texto, "ia"); }
+      catch(err){ cartaOcupada = false; $("#carta").innerHTML = htmlCarta(); errorIA(err); }
+    });
+  }
+
+  // ----- Postulaciones -----
+  const ESTADOS = [["", "Sin estado"], ["parapostular", "Para postular"], ["postulado", "Postulado"], ["entrevista", "Entrevista"], ["prueba", "Prueba técnica"], ["oferta", "Oferta"], ["rechazado", "Rechazado"], ["descartado", "Descartado por mí"], ["sinrta", "Sin respuesta"]];
+  const ESTN = Object.fromEntries(ESTADOS);
+  const CANALES = ["", "LinkedIn", "Bumeran", "ZonaJobs", "Computrabajo", "Indeed", "Glassdoor", "Web de la empresa", "Consultora", "Referido", "Otro"];
+  const estB = k => k ? `<span class="est e-${k}">${esc(ESTN[k] || k)}</span>` : "";
+  const hoyISO = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+  const fmtF = iso => iso ? new Date(iso + "T12:00:00").toLocaleDateString("es-AR", {day: "2-digit", month: "2-digit", year: "numeric"}) : "";
+  const dias = iso => Math.round((new Date(iso + "T12:00:00") - new Date(hoyISO() + "T12:00:00")) / 864e5);
+  function dlgPost(id){
+    const e = S.history.find(x => x.id === id); if(!e) return;
+    const p = Object.assign({estado: "", fecha: "", link: "", canal: "", contacto: "", prox: "", proxF: "", notas: "", tl: []}, e.post || {});
+    dlg(`<h3>📋 Seguimiento</h3><p class="sm mut" style="margin:0"><b>${esc(e.puesto || "(sin título)")}</b>${e.empresa ? " · " + esc(e.empresa) : ""}</p>
+      <div class="g2"><label>Estado<select id="pE">${ESTADOS.map(([k, l]) => `<option value="${k}"${p.estado === k ? " selected" : ""}>${l}</option>`).join("")}</select></label>
+        <label>Fecha de postulación<input id="pF" type="date" value="${esc(p.fecha)}"></label>
+        <label>Canal<select id="pC">${CANALES.map(c => `<option${p.canal === c ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></label>
+        <label>Contacto<input id="pCo" value="${esc(p.contacto)}" placeholder="Nombre, email o teléfono"></label></div>
+      <label>Link del aviso<input id="pL" type="url" value="${esc(p.link)}" placeholder="https://…"></label>
+      <div class="g2"><label>Próximo paso<input id="pP" value="${esc(p.prox)}" placeholder="Ej. hacer seguimiento por email"></label><label>Fecha del próximo paso<input id="pPF" type="date" value="${esc(p.proxF)}"></label></div>
+      <label>Notas<textarea id="pN" rows="3">${esc(p.notas)}</textarea></label>
+      ${p.tl.length ? `<ul class="tl">${p.tl.slice().reverse().map(x => `<li>${fmtD(x.at)} · ${esc(ESTN[x.estado] || "Sin estado")}</li>`).join("")}</ul>` : ""}
+      <div class="acts"><button class="btn" data-x type="button">Cancelar</button><button class="btn pri" id="pOk" type="button">Guardar</button></div>`);
+    $("#pE").onchange = () => { if(["postulado"].includes($("#pE").value) && !$("#pF").value) $("#pF").value = hoyISO(); };
+    $("#pOk").onclick = () => {
+      const n = {estado: $("#pE").value, fecha: $("#pF").value, canal: $("#pC").value, contacto: $("#pCo").value.trim().slice(0, 200), link: $("#pL").value.trim().slice(0, 500),
+        prox: $("#pP").value.trim().slice(0, 200), proxF: $("#pPF").value, notas: $("#pN").value.slice(0, 4000), tl: p.tl.slice(-30)};
+      if(n.estado !== p.estado) n.tl.push({estado: n.estado, at: Date.now()});
+      e.post = n; save(); $("#dlg").close(); if(S.tab === "hist") vHist(); toast("Seguimiento guardado.");
+    };
+  }
+
+  // ----- Tendencias -----
+  const cacheT = new Map();
+  function datosAviso(e){
+    const k = e.h + "|" + S.reglas.ver; if(cacheT.has(k)) return cacheT.get(k);
+    const J = A.analyzeJob(e.texto || "", {dict: DICT});
+    const d = {skills: J.skills.map(s => ({id: s.id, l: s.l, c: s.c, req: s.pri === "exc" || s.pri === "req"})), seniority: J.seniority, modalidad: J.modalidad, years: J.years, ingles: J.idiomas.some(i => i.n === "Inglés")};
+    cacheT.set(k, d); return d;
+  }
+  let tendF = {per: "0", post: false};
+  function vTend(){
+    const lim = +tendF.per ? Date.now() - +tendF.per * 864e5 : 0;
+    const E = S.history.filter(e => (e.upd || e.at) >= lim && (!tendF.post || (e.post && ["postulado", "entrevista", "prueba", "oferta", "rechazado", "sinrta"].includes(e.post.estado))));
+    const filtros = `<div class="g2 noprint"><label>Período<select id="tPer">${[["0", "Todo"], ["30", "Últimos 30 días"], ["90", "Últimos 90 días"], ["365", "Último año"]].map(([k, l]) => `<option value="${k}"${tendF.per === k ? " selected" : ""}>${l}</option>`).join("")}</select></label>
+      <label style="flex-direction:row;align-items:center;gap:8px;color:var(--tx);margin-top:18px"><input type="checkbox" id="tPost" style="width:18px;height:18px"${tendF.post ? " checked" : ""}> Solo avisos a los que me postulé</label></div>`;
+    const bind = () => { const a = $("#tPer"), b = $("#tPost"); if(a) a.onchange = () => { tendF.per = a.value; vTend(); }; if(b) b.onchange = () => { tendF.post = b.checked; vTend(); }; };
+    if(E.length < 2){ main.innerHTML = `<div class="card"><h2>📈 Tendencias</h2>${filtros}<p class="mut">Hacen falta al menos 2 avisos analizados${tendF.post || +tendF.per ? " con estos filtros" : ""} para ver tendencias. Cada aviso que analizás se suma automáticamente.</p></div>`; bind(); return; }
+    const D = E.map(datosAviso), N = E.length;
+    const cvN = A.norm(S.cv || ""), hayCV = !!cvN.trim();
+    const cnt = new Map(), cats = {}, sen = {}, mod = {};
+    D.forEach(d => {
+      d.skills.forEach(s => { const x = cnt.get(s.id) || {l: s.l, c: s.c, n: 0, r: 0}; x.n++; if(s.req) x.r++; cnt.set(s.id, x); cats[s.c] = (cats[s.c] || 0) + 1; });
+      (d.seniority.length ? d.seniority : ["No indica"]).forEach(x => sen[x] = (sen[x] || 0) + 1);
+      (d.modalidad.length ? d.modalidad : ["No indica"]).forEach(x => mod[x] = (mod[x] || 0) + 1);
+    });
+    const top = [...cnt.entries()].map(([id, x]) => ({id, ...x, falta: hayCV && !A.cvTiene(cvN, entrada(id))})).sort((a, b) => b.n - a.n || b.r - a.r).slice(0, 20);
+    const yrs = D.map(d => d.years).filter(Boolean), sc = E.map(e => e.score).filter(x => typeof x === "number");
+    const avg = a => a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length * 10) / 10 : null;
+    const pct = n => Math.round(n / N * 100);
+    const bars = (rows, extra) => `<div class="bars">${rows.map(r => `<div class="bar" title="${esc(r.tip || "")}"><span class="bl">${esc(r.l)}${extra ? extra(r) : ""}</span><span class="bt"><i style="width:${Math.max(2, r.p)}%"></i></span><span class="bv">${r.v}</span></div>`).join("")}</div>`;
+    const dist = o => bars(Object.entries(o).sort((a, b) => b[1] - a[1]).map(([l, n]) => ({l, p: pct(n), v: pct(n) + "%", tip: `${n} de ${N} avisos`})));
+    const reforzar = top.filter(x => x.falta && x.n >= Math.max(2, Math.ceil(N * .2)));
+    main.innerHTML = `${cabPrint("Tendencias")}<div class="card"><h2>📈 Tendencias de tus avisos</h2>${filtros}
+      <div class="tiles"><div class="tile"><b>${N}</b><span>avisos analizados</span></div><div class="tile"><b>${sc.length ? avg(sc) + "%" : "—"}</b><span>match promedio${sc.length ? ` (${sc.length})` : ""}</span></div>
+        <div class="tile"><b>${pct(D.filter(d => d.ingles).length)}%</b><span>piden inglés</span></div><div class="tile"><b>${yrs.length ? avg(yrs) : "—"}</b><span>años de experiencia pedidos (prom.)</span></div></div></div>
+    ${reforzar.length ? `<div class="card"><h2>🎯 Para reforzar en tu CV</h2><p class="sm mut">Se piden seguido y no aparecen en tu CV. Si los tenés, sumalos con estas palabras; si no, son candidatos para aprender.</p>
+      ${bars(reforzar.map(x => ({l: x.l, p: pct(x.n), v: pct(x.n) + "%", tip: `${x.n} de ${N} avisos · ${x.r} como requisito`})))}</div>` : ""}
+    <div class="card"><h2>Términos más pedidos</h2><p class="sm mut">Porcentaje de avisos que los mencionan.${hayCV ? " <span class='falta'>falta</span> = no está en tu CV." : ""} Pasá el mouse (o tocá) una barra para ver el detalle.</p>
+      ${bars(top.map(x => ({...x, p: pct(x.n), v: pct(x.n) + "%", tip: `${x.n} de ${N} avisos · ${x.r} como excluyente o requisito · ${A.CATS[x.c]}`})), r => r.falta ? '<span class="falta">falta</span>' : "")}
+      <details class="mt"><summary>Ver como tabla</summary><table class="t"><thead><tr><th>Término</th><th>Avisos</th><th>Como requisito</th>${hayCV ? "<th>En tu CV</th>" : ""}</tr></thead>
+        <tbody>${top.map(x => `<tr><td>${esc(x.l)}</td><td>${x.n} (${pct(x.n)}%)</td><td>${x.r}</td>${hayCV ? `<td>${x.falta ? "No" : "Sí"}</td>` : ""}</tr>`).join("")}</tbody></table></details></div>
+    <div class="card"><h2>Por categoría</h2><p class="sm mut">Porcentaje de menciones.</p>${(() => { const tot = Object.values(cats).reduce((a, b) => a + b, 0) || 1; return bars(Object.entries(cats).sort((a, b) => b[1] - a[1]).map(([c, n]) => ({l: A.CATS[c], p: Math.round(n / tot * 100), v: Math.round(n / tot * 100) + "%", tip: `${n} menciones`}))); })()}</div>
+    <div class="card"><h2>Seniority</h2>${dist(sen)}<h3 class="mt">Modalidad</h3>${dist(mod)}
+      <div class="acts noprint"><button class="btn" data-act="csvTend" type="button">⬇ CSV</button><button class="btn" data-act="print" type="button">🖨 Imprimir / PDF</button></div></div>`;
+    bind();
+    TEND = {N, top};
+  }
+  let TEND = null;
 
   // ----- IA -----
   const histActual = () => { const t = S.aviso.texto.trim(); return t ? S.history.find(x => x.h === hash(t)) : null; };
@@ -1439,15 +1663,27 @@ ${String(cv).slice(0, 20000)}
     if(S.history.length > 300) S.history.length = 300;
     save();
   }
+  let histF = "todos";
   function vHist(){
-    const H = S.history;
-    main.innerHTML = `<div class="card"><div class="row" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="margin:0">Historial de avisos</h2><span class="sm mut">${H.length}</span></div>
-      ${H.length ? H.map(e => `<div class="hrow"><div class="ht"><b>${esc(e.puesto || "(sin título)")}</b>${e.empresa ? ` · ${esc(e.empresa)}` : ""}
-        <div class="sm mut">${fmtD(e.upd || e.at)} · ${e.res ? `${e.res.skills} términos, ${e.res.exc} excluyentes/requisitos` : ""}${e.res && e.res.seniority && e.res.seniority.length ? " · " + esc(e.res.seniority.join(", ")) : ""}${e.res && e.res.modalidad && e.res.modalidad.length ? " · " + esc(e.res.modalidad.join(", ")) : ""}</div>
-        ${typeof e.score === "number" ? `<span class="badge ${nivel(e.score)}">Match ${e.score}%</span>` : ""}</div>
-        <div class="ha noprint"><button class="btn xs" data-act="abrir" data-id="${e.id}" type="button">Abrir</button><button class="btn xs" data-act="abrirMatch" data-id="${e.id}" type="button">Match</button><button class="ic" data-act="delHist" data-id="${e.id}" type="button" title="Borrar">🗑</button></div></div>`).join("")
-        : '<p class="mut">Todavía no hay avisos. Cada aviso que analizás se guarda acá, solo en este navegador.</p>'}
-      ${H.length ? `<div class="acts noprint"><button class="btn" data-act="csvHist" type="button">⬇ Exportar CSV</button><button class="btn danger" data-act="clearHist" type="button">Borrar historial</button></div>` : ""}</div>`;
+    const H = S.history, est = e => (e.post && e.post.estado) || "";
+    const cuenta = {}; H.forEach(e => { const k = est(e); cuenta[k] = (cuenta[k] || 0) + 1; });
+    const activos = ["postulado", "entrevista", "prueba", "oferta"];
+    const L = H.filter(e => histF === "todos" || (histF === "activos" ? activos.includes(est(e)) : est(e) === histF));
+    const prox = H.filter(e => e.post && e.post.proxF && !["rechazado", "descartado"].includes(est(e))).sort((a, b) => a.post.proxF.localeCompare(b.post.proxF)).filter(e => dias(e.post.proxF) <= 7);
+    const filtro = (k, l, n) => `<button type="button" data-act="histF" data-v="${k}" class="${histF === k ? "on" : ""}">${l}${n !== undefined ? ` · ${n}` : ""}</button>`;
+    main.innerHTML = `${prox.length ? `<div class="card"><h2>⏰ Próximos pasos</h2>${prox.map(e => { const d = dias(e.post.proxF); return `<div class="hrow"><div class="ht"><b>${esc(e.puesto || "(sin título)")}</b>${e.empresa ? " · " + esc(e.empresa) : ""}
+      <div class="sm"><span class="${d < 0 ? "vence" : d <= 2 ? "pronto" : ""}">${d < 0 ? `Venció hace ${-d} día${d < -1 ? "s" : ""}` : d === 0 ? "Hoy" : d === 1 ? "Mañana" : `En ${d} días`} (${fmtF(e.post.proxF)})</span> · ${esc(e.post.prox || "Próximo paso")}</div></div>
+      <div class="ha noprint"><button class="btn xs" data-act="post" data-id="${e.id}" type="button">✏️</button></div></div>`; }).join("")}</div>` : ""}
+    <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="margin:0">📋 Postulaciones</h2><span class="sm mut">${H.length} avisos</span></div>
+      ${H.length ? `<div class="filt noprint">${filtro("todos", "Todos", H.length)}${filtro("activos", "En curso", H.filter(e => activos.includes(est(e))).length)}${ESTADOS.filter(([k]) => cuenta[k]).map(([k, l]) => filtro(k, l, cuenta[k])).join("")}</div>` : ""}
+      ${L.length ? L.map(e => { const p = e.post || {}; return `<div class="hrow"><div class="ht"><b>${esc(e.puesto || "(sin título)")}</b>${e.empresa ? ` · ${esc(e.empresa)}` : ""} ${estB(p.estado)}
+        <div class="sm mut">${p.fecha ? "Postulado el " + fmtF(p.fecha) : "Analizado el " + fmtD(e.upd || e.at)}${p.canal ? " · " + esc(p.canal) : ""}${e.res ? ` · ${e.res.exc} excluyentes/requisitos` : ""}${e.res && e.res.modalidad && e.res.modalidad.length ? " · " + esc(e.res.modalidad.join(", ")) : ""}</div>
+        ${p.prox ? `<div class="sm">➡ ${esc(p.prox)}${p.proxF ? ` <span class="${dias(p.proxF) < 0 ? "vence" : "mut"}">(${fmtF(p.proxF)})</span>` : ""}</div>` : ""}
+        ${typeof e.score === "number" ? `<span class="badge ${nivel(e.score)}">Match ${e.score}%</span>` : ""}${e.ia && e.ia.match && e.ia.match.puntaje !== null ? ` <span class="badge ${nivel(e.ia.match.puntaje)}">IA ${e.ia.match.puntaje}%</span>` : ""}${e.carta ? ' <span class="badge ok">✉️ carta</span>' : ""}
+        ${p.link ? ` <a class="sm" href="${esc(p.link)}" target="_blank" rel="noopener">Ver aviso ↗</a>` : ""}</div>
+        <div class="ha noprint"><button class="btn xs" data-act="post" data-id="${e.id}" type="button">📋 Seguimiento</button><button class="btn xs" data-act="abrir" data-id="${e.id}" type="button">Abrir</button><button class="btn xs" data-act="abrirMatch" data-id="${e.id}" type="button">Match</button><button class="ic" data-act="delHist" data-id="${e.id}" type="button" title="Borrar">🗑</button></div></div>`; }).join("")
+        : `<p class="mut">${H.length ? "No hay avisos con este estado." : "Todavía no hay avisos. Cada aviso que analizás se guarda acá, solo en este navegador, y desde “📋 Seguimiento” registrás el estado de tu postulación."}</p>`}
+      ${H.length ? `<div class="acts noprint"><button class="btn" data-act="csvHist" type="button">⬇ Exportar CSV</button><button class="btn danger" data-act="clearHist" type="button">Borrar todo</button></div>` : ""}</div>`;
   }
   function cargar(id, tab){
     const e = S.history.find(x => x.id === id); if(!e) return;
@@ -1534,10 +1770,11 @@ ${String(cv).slice(0, 20000)}
     bajar(`match-${slug(S.aviso.puesto)}-${hoy()}.csv`, csv(rows), "text/csv;charset=utf-8");
   }
   function csvHist(){
-    const rows = [["Fecha", "Puesto", "Empresa", "Términos", "Excluyentes / requisitos", "Principales", "Seniority", "Modalidad", "Match %"]];
-    S.history.forEach(e => rows.push([fmtD(e.upd || e.at), e.puesto, e.empresa, e.res ? e.res.skills : "", e.res ? e.res.exc : "", e.res && e.res.top ? e.res.top.join(", ") : "",
-      e.res && e.res.seniority ? e.res.seniority.join(", ") : "", e.res && e.res.modalidad ? e.res.modalidad.join(", ") : "", typeof e.score === "number" ? e.score : ""]));
-    bajar(`historial-avisos-${hoy()}.csv`, csv(rows), "text/csv;charset=utf-8");
+    const rows = [["Analizado", "Puesto", "Empresa", "Estado", "Fecha de postulación", "Canal", "Contacto", "Link", "Próximo paso", "Fecha próximo paso", "Notas", "Términos", "Excluyentes / requisitos", "Principales", "Seniority", "Modalidad", "Match %", "Match IA %"]];
+    S.history.forEach(e => { const p = e.post || {}; rows.push([fmtD(e.upd || e.at), e.puesto, e.empresa, ESTN[p.estado] || "", p.fecha || "", p.canal || "", p.contacto || "", p.link || "", p.prox || "", p.proxF || "", p.notas || "",
+      e.res ? e.res.skills : "", e.res ? e.res.exc : "", e.res && e.res.top ? e.res.top.join(", ") : "", e.res && e.res.seniority ? e.res.seniority.join(", ") : "", e.res && e.res.modalidad ? e.res.modalidad.join(", ") : "",
+      typeof e.score === "number" ? e.score : "", e.ia && e.ia.match && e.ia.match.puntaje !== null ? e.ia.match.puntaje : ""]); });
+    bajar(`postulaciones-${hoy()}.csv`, csv(rows), "text/csv;charset=utf-8");
   }
   function backup(){
     const data = {app: "jobpost", tipo: "backup", formato: FORMATO, version: appV(), motor: A.MOTOR, exportado: new Date().toISOString(),
@@ -1559,6 +1796,10 @@ ${String(cv).slice(0, 20000)}
         res: e.res && typeof e.res === "object" ? {skills: +e.res.skills || 0, exc: +e.res.exc || 0, seniority: (Array.isArray(e.res.seniority) ? e.res.seniority : []).map(x => str(x, 40)).slice(0, 6),
           modalidad: (Array.isArray(e.res.modalidad) ? e.res.modalidad : []).map(x => str(x, 40)).slice(0, 4), top: (Array.isArray(e.res.top) ? e.res.top : []).map(x => str(x, 80)).slice(0, 8)} : null,
         ...(typeof e.score === "number" && e.score >= 0 && e.score <= 100 ? {score: Math.round(e.score), scoreAt: +e.scoreAt || 0} : {}),
+        ...(e.post && typeof e.post === "object" ? {post: {estado: ESTN[e.post.estado] !== undefined ? e.post.estado : "", fecha: /^\d{4}-\d{2}-\d{2}$/.test(e.post.fecha || "") ? e.post.fecha : "", canal: str(e.post.canal, 40), contacto: str(e.post.contacto, 200),
+          link: /^https?:\/\//i.test(e.post.link || "") ? str(e.post.link, 500) : "", prox: str(e.post.prox, 200), proxF: /^\d{4}-\d{2}-\d{2}$/.test(e.post.proxF || "") ? e.post.proxF : "", notas: str(e.post.notas, 4000),
+          tl: (Array.isArray(e.post.tl) ? e.post.tl : []).slice(-30).map(x => ({estado: ESTN[x && x.estado] !== undefined ? x.estado : "", at: +(x && x.at) || 0}))}} : {}),
+        ...(e.carta && typeof e.carta === "object" && typeof e.carta.texto === "string" ? {carta: {texto: e.carta.texto.slice(0, 6000), origen: e.carta.origen === "ia" ? "ia" : "local", at: +e.carta.at || Date.now()}} : {}),
         ...(e.ia && typeof e.ia === "object" ? {ia: {...(e.ia.aviso ? {aviso: IA.normAviso(e.ia.aviso)} : {}), ...(e.ia.match ? {match: IA.normMatch(e.ia.match)} : {})}} : {})});
     });
     (Array.isArray(d.custom) ? d.custom : []).slice(0, 2000).forEach(c => {
@@ -1672,6 +1913,13 @@ Ofrecemos:
     borrarCV: () => confirmar("Borrar CV", "Se borra el texto del CV guardado en este navegador.", "Borrar", () => { S.cv = ""; S.cvSrc = null; MATCH = null; save(); vMatch(); }),
     cvArchivo: () => $("#cvFile").click(), cvCvapp: () => dlgCvapp(), cvGoogle: () => dlgGoogle(),
     tema: b => { S.tema = b.dataset.v; save(); aplicarTema(); document.querySelectorAll('[data-act="tema"]').forEach(x => x.classList.toggle("on", x === b)); },
+    seguir: () => { guardarHist(); const e = histActual(); if(e) dlgPost(e.id); },
+    post: b => dlgPost(b.dataset.id),
+    histF: b => { histF = b.dataset.v; vHist(); },
+    cartaLocal: () => generarCarta(false), cartaIA: () => generarCarta(true),
+    cartaCopiar: async () => { const t = $("#cartaTx").value; const e = histActual(); if(e && e.carta){ e.carta.texto = t; save(); } try{ await navigator.clipboard.writeText(t); toast("Carta copiada."); }catch(err){ $("#cartaTx").select(); toast("Seleccioná y copiá con Ctrl+C."); } },
+    cartaTxt: () => { const t = $("#cartaTx").value; const e = histActual(); if(e && e.carta){ e.carta.texto = t; save(); } bajar(`carta-${slug(S.aviso.puesto)}.txt`, t, "text/plain;charset=utf-8"); },
+    csvTend: () => { if(!TEND) return; bajar(`tendencias-${hoy()}.csv`, csv([["Término", "Categoría", "Avisos", "% de avisos", "Como requisito", "En tu CV"], ...TEND.top.map(x => [x.l, A.CATS[x.c], x.n, Math.round(x.n / TEND.N * 100), x.r, S.cv.trim() ? (x.falta ? "No" : "Sí") : ""])]), "text/csv;charset=utf-8"); },
     iaConfig: () => dlgIA(), iaAviso: () => iaAviso(), iaMatch: () => iaMatch(), iaAprobar: b => aprobar(b.dataset.o),
     iaTodas: b => { const cbs = [...document.querySelectorAll(`[data-sug^="${b.dataset.o}:"]`)]; const v = !cbs.every(x => x.checked); cbs.forEach(x => x.checked = v); },
     reglasExp: () => bajar(`jobpost-reglas-v${S.reglas.ver}-${hoy()}.json`, JSON.stringify({app: "jobpost", tipo: "reglas", formato: FORMATO, ver: S.reglas.ver, motor: A.MOTOR, exportado: new Date().toISOString(), reglas: S.custom}, null, 2), "application/json"),
